@@ -1,0 +1,77 @@
+{
+  "_fixture": true,
+  "fixtureSet": "fixture:nces-ccd-2026-v1",
+  "description": "Synthetic K-8 school directory sample in NCES CCD field shape (NCESSCH, SCH_NAME, LEA_NAME, LEAID, LSTATE, LCITY, GSLO, GSHI). Every school, district, and city is invented for the fixture-mode validation beta; no real school is represented and no NCES identifier is real.",
+  "generatedAt": "2026-08-01T00:00:00.000Z",
+  "provenance": {
+    "source": "fixture:nces-ccd-2026-v1",
+    "sourceType": "fixture",
+    "observedAt": "2026-08-01T00:00:00.000Z",
+    "geography": "US",
+    "transformVersion": "ingestion:nces_ccd@0.2.0",
+    "confidence": 1.0,
+    "limitations": "Synthetic fixture data for the validation beta. These schools do not exist; state codes are real USPS codes only so tax-holiday scoping can be exercised."
+  },
+  "records": [
+    {
+      "NCESSCH": "FIXTURE-SCH-0001",
+      "SCH_NAME": "Meadow Valley Elementary (Fixture)",
+      "LEA_NAME": "Meadow Valley Unified District (Fixture)",
+      "LEAID": "FIXTURE-LEA-01",
+      "LSTATE": "TX",
+      "LCITY": "Fixtureville",
+      "GSLO": "KG",
+      "GSHI": "05"
+    },
+    {
+      "NCESSCH": "FIXTURE-SCH-0002",
+      "SCH_NAME": "Cedar Bend Middle School (Fixture)",
+      "LEA_NAME": "Meadow Valley Unified District (Fixture)",
+      "LEAID": "FIXTURE-LEA-01",
+      "LSTATE": "TX",
+      "LCITY": "Fixtureville",
+      "GSLO": "06",
+      "GSHI": "08"
+    },
+    {
+      "NCESSCH": "FIXTURE-SCH-0003",
+      "SCH_NAME": "Harbor Sample Elementary (Fixture)",
+      "LEA_NAME": "Sample Harbor School District (Fixture)",
+      "LEAID": "FIXTURE-LEA-02",
+      "LSTATE": "FL",
+      "LCITY": "Sample Harbor",
+      "GSLO": "PK",
+      "GSHI": "05"
+    },
+    {
+      "NCESSCH": "FIXTURE-SCH-0004",
+      "SCH_NAME": "Placeholder Creek K-8 School (Fixture)",
+      "LEA_NAME": "Placeholder Creek Local Schools (Fixture)",
+      "LEAID": "FIXTURE-LEA-03",
+      "LSTATE": "OH",
+      "LCITY": "Placeholder Creek",
+      "GSLO": "KG",
+      "GSHI": "08"
+    },
+    {
+      "NCESSCH": "FIXTURE-SCH-0005",
+      "SCH_NAME": "Specimen Grove Elementary (Fixture)",
+      "LEA_NAME": "Specimen Grove District (Fixture)",
+      "LEAID": "FIXTURE-LEA-04",
+      "LSTATE": "SC",
+      "LCITY": "Specimen Grove",
+      "GSLO": "KG",
+      "GSHI": "04"
+    },
+    {
+      "NCESSCH": "FIXTURE-SCH-0006",
+      "SCH_NAME": "Mockingbird Flats Middle School (Fixture)",
+      "LEA_NAME": "Mockingbird Flats District (Fixture)",
+      "LEAID": "FIXTURE-LEA-05",
+      "LSTATE": "CA",
+      "LCITY": "Mockingbird Flats",
+      "GSLO": "06",
+      "GSHI": "08"
+    }
+  ]
+}

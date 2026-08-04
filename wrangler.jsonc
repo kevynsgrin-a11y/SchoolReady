@@ -18,8 +18,36 @@
       "database_id": "00000000-0000-0000-0000-000000000000",
       "migrations_dir": "migrations"
     }
+  ],
+  // KV (Phase 2, ingestion-engineer): one namespace for the §2-sanctioned
+  // source-health snapshots ('health:<sourceId>'), stale-while-revalidate
+  // cache envelopes ('cache:<sourceId>'), and runtime flag overrides
+  // ('flags:overrides') — key prefixes in src/ingestion/source-health.ts.
+  // Fixture posture: placeholder id (all zeros), local-only like D1.
+  "kv_namespaces": [
+    {
+      "binding": "SOURCE_KV",
+      "id": "00000000000000000000000000000000"
+    }
+  ],
+  // R2 (Phase 3, parser-engineer): §2 sanctions R2 ONLY for transient upload
+  // buffers with a hard TTL — this bucket is exactly and exclusively that.
+  // Uploaded list photos/PDFs are buffered here, OCR'd, and deleted in a
+  // `finally` block the moment processing ends (src/parsing/upload-buffer.ts,
+  // UPLOAD_BUFFER_TTL_SECONDS = 900). R2 lifecycle rules have day
+  // granularity, so the TTL is additionally enforced in code: expired
+  // objects are unreadable and deleted on access/sweep. Nothing else may use
+  // this bucket, and nothing from an upload may reach KV or D1 as raw
+  // bytes/text (§1.7). Fixture posture: placeholder bucket, local-only like
+  // D1/KV — no production bucket is provisioned.
+  "r2_buckets": [
+    {
+      "binding": "UPLOAD_BUFFER",
+      "bucket_name": "k8-planner-upload-buffer-fixture"
+    }
   ]
-  // KV, Queues, R2 (transient upload buffer w/ TTL), and Durable Objects
-  // bindings land with their owning phases (2, 3, 5) — each must be
-  // justified in that phase's handoff per §2.
+  // Queues and Durable Objects bindings land with their owning phase (5) —
+  // each must be justified in that phase's handoff per §2. The
+  // ingestion-refresh queue contract (src/ingestion/jobs.ts) is provisioned
+  // in Phase 5 with the API worker.
 }

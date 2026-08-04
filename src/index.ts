@@ -8,6 +8,18 @@ import { DEFAULT_FLAGS } from "../config/flags";
 export interface Env {
   /** D1 database (fixture posture: local-only, placeholder database_id). */
   DB: D1Database;
+  /**
+   * KV namespace (Phase 2): source-health snapshots ('health:<sourceId>'),
+   * SWR cache envelopes ('cache:<sourceId>'), runtime flag overrides
+   * ('flags:overrides'). Prefixes defined in src/ingestion/source-health.ts.
+   */
+  SOURCE_KV: KVNamespace;
+  /**
+   * R2 transient upload buffer (Phase 3): the ONLY sanctioned R2 use (§2) —
+   * uploaded list photos/PDFs held under a hard TTL while being parsed, then
+   * deleted (src/parsing/upload-buffer.ts). Never a durable store (§1.7).
+   */
+  UPLOAD_BUFFER: R2Bucket;
   FIXTURE_MODE: string;
 }
 
