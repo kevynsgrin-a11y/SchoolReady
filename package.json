@@ -1,0 +1,28 @@
+{
+  "name": "k8-planner",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Anonymous-first US K-8 back-to-school planning utility (fixture-mode beta). Brand name lives only in config/brand.ts.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "lint": "eslint . && node scripts/lint-banned-claims.mjs && node scripts/lint-no-emoji.mjs",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.tests.json --noEmit && tsc -p tsconfig.workers-tests.json --noEmit",
+    "test": "vitest run",
+    "verify": "npm run lint && npm run typecheck && npm run test"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.20.1",
+    "@cloudflare/workers-types": "^5.20260801.1",
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^26.1.2",
+    "eslint": "^10.8.0",
+    "globals": "^17.8.0",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.65.0",
+    "vitest": "^4.1.10",
+    "wrangler": "^4.118.0"
+  }
+}

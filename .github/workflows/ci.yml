@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run verify
+
+  # Lighthouse budgets (lighthouserc.json) are committed from Phase 0 but the
+  # job activates in Phase 7, when frontend-engineer lands a buildable app and
+  # sets the LHCI_ENABLED repository variable to 'true'. Budgets: Perf >= 90,
+  # A11y >= 95, Best Practices >= 95, SEO >= 95, CLS < 0.1, LCP < 2.5s (mobile).
+  lighthouse:
+    if: ${{ vars.LHCI_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npx --yes @lhci/cli autorun --config=lighthouserc.json

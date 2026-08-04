@@ -1,0 +1,25 @@
+{
+  // Worker name is deliberately brand-neutral (§0 brand isolation).
+  "name": "k8-planner",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-01",
+  "vars": {
+    "FIXTURE_MODE": "true"
+  },
+  // D1 binding (Phase 1, data-architect). Fixture posture: local-only —
+  // database_id is a placeholder (all zeros), no real database is provisioned.
+  // `wrangler d1 migrations apply k8-planner-fixture --local` runs the up
+  // migrations in migrations/; paired down migrations live in migrations/down/
+  // (wrangler reads only the top level) and are exercised by tests/schema.test.ts.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "k8-planner-fixture",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ]
+  // KV, Queues, R2 (transient upload buffer w/ TTL), and Durable Objects
+  // bindings land with their owning phases (2, 3, 5) — each must be
+  // justified in that phase's handoff per §2.
+}
