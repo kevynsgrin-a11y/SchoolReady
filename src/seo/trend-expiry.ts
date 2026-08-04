@@ -10,11 +10,16 @@
  */
 import type { IsoTimestamp, ProvenanceRecord } from "../contracts/provenance";
 import { TREND_PAGE_EXPIRY_DAYS } from "./config";
+import { verifiedRecords } from "./quality-gate";
 
 const DAY_MS = 86_400_000;
 
 export interface TrendPageStatus {
-  /** Newest observedAt across the page's provenance; null = no evidence. */
+  /**
+   * Newest observedAt across the page's VERIFIED provenance (same filter as
+   * the quality gate's verified_source check, gate finding P8-1); null = no
+   * verified evidence.
+   */
   readonly newestEvidenceAt: IsoTimestamp | null;
   /** newestEvidenceAt + the expiry window; null = no evidence. */
   readonly expiresAt: IsoTimestamp | null;
@@ -38,11 +43,13 @@ export function trendPageStatus(
   nowMs: number,
   expiryDays: number = TREND_PAGE_EXPIRY_DAYS,
 ): TrendPageStatus {
-  const timestamps = evidenceTimestamps(provenance);
+  // P8-1: only verified records can keep a trend page alive — a fresh
+  // fixture/user_entry record must not mask stale verified evidence.
+  const timestamps = evidenceTimestamps(verifiedRecords(provenance));
   const newest = timestamps.length > 0 ? timestamps[timestamps.length - 1]! : null;
   if (newest === null) {
-    // A trend page with no dated evidence has nothing to stand on: treat it
-    // as already expired and route it to review (suppression beats guessing).
+    // A trend page with no dated verified evidence has nothing to stand on:
+    // treat it as expired and route it to review (suppression beats guessing).
     return { newestEvidenceAt: null, expiresAt: null, expired: true, review: true };
   }
   const expiresAtMs = Date.parse(newest) + expiryDays * DAY_MS;

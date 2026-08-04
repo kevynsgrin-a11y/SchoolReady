@@ -7,6 +7,7 @@
  * /robots.txt). All policy lives in the sibling modules; this file is glue.
  */
 import { SESSION_COOKIE } from "../api/contracts";
+import { parseCookies } from "../api/session";
 import { COMMON } from "../ui/copy/en";
 import { canonicalOrigin } from "./config";
 import type { RequestSeoContext, RobotsDirective, RouteSeoEntry } from "./route-metadata";
@@ -58,7 +59,11 @@ export function resolveSeoForPath(path: string, ctx: RequestSeoContext): Resolve
 
 export function resolveSeoForRequest(request: Request): ResolvedSeo {
   const url = new URL(request.url);
-  const hasSession = (request.headers.get("cookie") ?? "").includes(`${SESSION_COOKIE}=`);
+  // Exact cookie-NAME match via the API's own parser (gate finding P8-4): a
+  // substring test would count any cookie whose name merely ends in the
+  // session name.
+  const cookies = parseCookies(request.headers.get("cookie"));
+  const hasSession = cookies[SESSION_COOKIE] !== undefined;
   return resolveSeoForPath(url.pathname, { method: request.method, hasSession });
 }
 

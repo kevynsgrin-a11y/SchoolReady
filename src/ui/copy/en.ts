@@ -74,6 +74,10 @@ export const SUPPRESSION = {
     "Not shown: the source retracted this fact. It will not return unless the source republishes it.",
   underReview:
     "Not shown: this fact is under review at its source. It returns when the review resolves.",
+  totalsHeldBackNote: (count: number): string =>
+    count === 1
+      ? "1 required line was held back above and is not counted in these totals; the note on that line explains why."
+      : `${count} required lines were held back above and are not counted in these totals; the notes on those lines explain why.`,
   reasonLabels: {
     stale_or_unverified_list: "This list is stale or not yet confirmed, so its items render as unverified.",
     unresolved_product_variant:

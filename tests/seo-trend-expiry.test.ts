@@ -40,10 +40,14 @@ describe("evidence timestamps", () => {
   });
 });
 
+/** Verified-source record (fixture is deliberately NOT a verified type). */
+const verified = (observedAt: string) =>
+  record({ sourceType: "government_feed", observedAt });
+
 describe("trend page status", () => {
   it("fresh evidence: not expired, expiry stamped from the newest observation", () => {
     const observed = new Date(NOW - DAY_MS).toISOString();
-    const status = trendPageStatus([record({ observedAt: observed })], NOW);
+    const status = trendPageStatus([verified(observed)], NOW);
     expect(status.newestEvidenceAt).toBe(observed);
     expect(status.expired).toBe(false);
     expect(status.review).toBe(false);
@@ -54,14 +58,11 @@ describe("trend page status", () => {
 
   it("auto-expires into review at the boundary and beyond", () => {
     const observed = new Date(NOW - TREND_PAGE_EXPIRY_DAYS * DAY_MS).toISOString();
-    const atBoundary = trendPageStatus([record({ observedAt: observed })], NOW);
+    const atBoundary = trendPageStatus([verified(observed)], NOW);
     expect(atBoundary.expired).toBe(true);
     expect(atBoundary.review).toBe(true);
 
-    const wellPast = trendPageStatus(
-      [record({ observedAt: "2026-01-01T00:00:00.000Z" })],
-      NOW,
-    );
+    const wellPast = trendPageStatus([verified("2026-01-01T00:00:00.000Z")], NOW);
     expect(wellPast.expired).toBe(true);
     expect(wellPast.review).toBe(true);
   });
@@ -75,11 +76,30 @@ describe("trend page status", () => {
       review: true,
     });
   });
+
+  it("unverified evidence cannot keep a trend page alive (P8-1)", () => {
+    // A fresh fixture record (default sourceType in the helper) plus a stale
+    // verified one: only the VERIFIED observation feeds the expiry clock.
+    const staleVerified = verified("2026-01-01T00:00:00.000Z");
+    const freshFixture = record({ observedAt: T0_ISO });
+    const status = trendPageStatus([staleVerified, freshFixture], NOW);
+    expect(status.newestEvidenceAt).toBe("2026-01-01T00:00:00.000Z");
+    expect(status.expired).toBe(true);
+    expect(status.review).toBe(true);
+
+    // Fixture-only evidence counts as no evidence at all.
+    expect(trendPageStatus([freshFixture], NOW)).toEqual({
+      newestEvidenceAt: null,
+      expiresAt: null,
+      expired: true,
+      review: true,
+    });
+  });
 });
 
 describe("programmatic policy — gate + expiry combine", () => {
-  const fresh = trendPageStatus([record({ observedAt: T0_ISO })], NOW);
-  const expired = trendPageStatus([record({ observedAt: "2026-01-01T00:00:00.000Z" })], NOW);
+  const fresh = trendPageStatus([verified(T0_ISO)], NOW);
+  const expired = trendPageStatus([verified("2026-01-01T00:00:00.000Z")], NOW);
 
   it("passing gate + fresh trend evidence = indexable", () => {
     expect(resolveProgrammaticPolicy({ gate: { pass: true }, trend: fresh })).toEqual({

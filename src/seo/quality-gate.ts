@@ -13,8 +13,9 @@
  *      a verified source type, not expired, not retracted/under review.
  *   2. min_fields       — the template populated at least minPopulatedFields
  *      data-backed fields (thin shells never ship).
- *   3. freshness        — the newest supporting evidence is at most
- *      maxEvidenceAgeDays old.
+ *   3. freshness        — the newest VERIFIED supporting evidence is at most
+ *      maxEvidenceAgeDays old (same verified-record filter as check 1; a
+ *      fresh fixture/user_entry record cannot mask a stale verified source).
  *   4. duplication      — word-shingle Jaccard similarity against every
  *      existing page stays below maxTemplateSimilarity.
  */
@@ -135,13 +136,16 @@ export function evaluateQualityGate(
     });
   }
 
-  const newestObservedMs = candidate.provenance.reduce<number | null>((newest, record) => {
+  // Freshness is judged over the SAME verified records that stand behind the
+  // page (gate finding P8-1): evidence that cannot satisfy the
+  // verified_source check cannot refresh the page's clock either.
+  const newestObservedMs = verified.reduce<number | null>((newest, record) => {
     const observed = Date.parse(record.observedAt);
     if (Number.isNaN(observed)) return newest;
     return newest === null ? observed : Math.max(newest, observed);
   }, null);
   if (newestObservedMs === null) {
-    failures.push({ check: "freshness", detail: "no dated evidence backs this page" });
+    failures.push({ check: "freshness", detail: "no dated verified evidence backs this page" });
   } else {
     const ageDays = (nowMs - newestObservedMs) / DAY_MS;
     if (ageDays > config.maxEvidenceAgeDays) {

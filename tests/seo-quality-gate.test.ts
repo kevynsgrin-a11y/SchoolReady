@@ -95,6 +95,35 @@ describe("quality gate — a deliberately thin page is rejected (acceptance)", (
     expect(result.failures.map((f) => f.check)).toContain("freshness");
   });
 
+  it("fresh unverified evidence cannot mask a stale verified source (P8-1)", () => {
+    const staleVerified = record({
+      id: "prov:test:stale-gov",
+      sourceType: "government_feed",
+      observedAt: "2026-06-01T00:00:00.000Z", // 64 days before T0 — stale
+    });
+    const freshFixture = record({
+      id: "prov:test:fresh-fixture",
+      sourceType: "fixture",
+      observedAt: "2026-08-03T00:00:00.000Z", // 1 day before T0 — fresh
+    });
+    const freshUserEntry = record({
+      id: "prov:test:fresh-user",
+      sourceType: "user_entry",
+      observedAt: "2026-08-03T00:00:00.000Z",
+    });
+    const result = evaluateQualityGate(
+      { ...richPage, provenance: [staleVerified, freshFixture, freshUserEntry] },
+      [],
+      NOW,
+    );
+    expect(result.pass).toBe(false);
+    if (result.pass) throw new Error("unreachable");
+    // verified_source passes (one verified record) — freshness must still
+    // fail, because the only VERIFIED record is stale.
+    expect(result.failures.map((f) => f.check)).not.toContain("verified_source");
+    expect(result.failures.map((f) => f.check)).toContain("freshness");
+  });
+
   it("rejects retracted/under-review sources even when fresh", () => {
     const retracted = record({ sourceType: "government_feed", correctionStatus: "retracted" });
     const result = evaluateQualityGate({ ...richPage, provenance: [retracted] }, [], NOW);

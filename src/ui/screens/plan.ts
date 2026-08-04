@@ -21,20 +21,9 @@ import { netRequiredStack } from "../components/ledger";
 import { guardFact, renderFact, suppressionNotice } from "../render-guard";
 import type { ScreenState } from "../state";
 import { envelopeChrome, foldState, intro } from "./shared";
-import { PLAN } from "../copy/en";
+import { PLAN, SUPPRESSION } from "../copy/en";
 
 export type PlanScreenState = ScreenState<MergeData>;
-
-/**
- * §1.5 note under the whole-plan heading when guard-refused required lines
- * exist: the totals must never be silently smaller than the list implies.
- * Local to this screen (P7-1 scope); matches the SUPPRESSION voice in
- * copy/en.ts and belongs there on the next copy pass.
- */
-const totalsHeldBackNote = (count: number): string =>
-  count === 1
-    ? "1 required line was held back above and is not counted in these totals; the note on that line explains why."
-    : `${count} required lines were held back above and are not counted in these totals; the notes on those lines explain why.`;
 
 export function lineDisplayName(line: {
   productTypeSlug: string;
@@ -125,7 +114,9 @@ export function renderPlan(state: PlanScreenState): Screen {
       {
         kind: "required_items" as const,
         body: html`<h2>${PLAN.wholePlanTitle}</h2>${
-          refusedRequired > 0 ? suppressionNotice(totalsHeldBackNote(refusedRequired)) : null
+          refusedRequired > 0
+            ? suppressionNotice(SUPPRESSION.totalsHeldBackNote(refusedRequired))
+            : null
         }${renderFact({
           provenanceIds: contributingIds,
           provenance: envelope.provenance,

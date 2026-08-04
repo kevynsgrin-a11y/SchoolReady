@@ -15,7 +15,8 @@ import {
   nonIndexablePaths,
   resolveRobots,
 } from "../src/seo/route-metadata";
-import { resolveSeoForPath } from "../src/seo/integration";
+import { resolveSeoForPath, resolveSeoForRequest } from "../src/seo/integration";
+import { SESSION_COOKIE } from "../src/api/contracts";
 
 /**
  * The UI server's HTML GET routes as of Phase 8 (src/ui/server.ts router).
@@ -123,6 +124,30 @@ describe("robots resolution — default deny", () => {
     expect(
       resolveRobots("/item/fixture-gel-pen", { ...anonymous, programmatic: null }).robots,
     ).toBe("noindex");
+  });
+});
+
+describe("request session detection — exact cookie-name match (P8-4)", () => {
+  const requestFor = (cookie: string | null): Request =>
+    new Request("https://fixture.test/plan/basket", {
+      headers: cookie === null ? {} : { cookie },
+    });
+
+  it("a cookie whose name merely ends in the session name is NOT a session", () => {
+    expect(resolveSeoForRequest(requestFor(`not_${SESSION_COOKIE}=x`)).robots).toBe(
+      "index,follow",
+    );
+  });
+
+  it("the real session cookie flips the same route to noindex", () => {
+    expect(resolveSeoForRequest(requestFor(`${SESSION_COOKIE}=x`)).robots).toBe("noindex");
+    expect(
+      resolveSeoForRequest(requestFor(`a=1; ${SESSION_COOKIE}=x; b=2`)).robots,
+    ).toBe("noindex");
+  });
+
+  it("no cookie header at all resolves anonymous", () => {
+    expect(resolveSeoForRequest(requestFor(null)).robots).toBe("index,follow");
   });
 });
 
