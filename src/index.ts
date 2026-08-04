@@ -2,6 +2,7 @@ import { BRAND } from "../config/brand";
 import { DEFAULT_FLAGS } from "../config/flags";
 import type { SourceId } from "../config/flags";
 import { handleApiRequest } from "./api/routes";
+import { handleUiRequest } from "./ui/server";
 import type { ApiDeps, FixtureLibrary } from "./api/deps";
 import { createAllowlistLogger } from "./api/logging";
 import { createFixtureTurnstileVerifier, createLiveTurnstileStub } from "./api/turnstile";
@@ -157,6 +158,11 @@ export default {
     if (url.pathname.startsWith("/api/")) {
       return handleApiRequest(request, buildApiDeps(env));
     }
+    // UI layer (Phase 7): server-rendered HTML over the same deps/API.
+    // Static files (fonts, client JS, service worker) are served by the
+    // Workers Static Assets layer before this handler runs in production.
+    const uiResponse = await handleUiRequest(request, buildApiDeps(env));
+    if (uiResponse) return uiResponse;
     return new Response("Not found", { status: 404 });
   },
 

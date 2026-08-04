@@ -46,6 +46,14 @@
       "bucket_name": "k8-planner-upload-buffer-fixture"
     }
   ],
+  // Static Assets (Phase 7, frontend-engineer): §2 stack is Workers +
+  // Static Assets. public/ carries ONLY static UI files — self-hosted OFL
+  // font binaries (+ licenses), the progressive-enhancement script, and the
+  // offline service worker. HTML is rendered by the Worker; requests that
+  // match no asset fall through to it (default run order).
+  "assets": {
+    "directory": "public"
+  },
   // Queues (Phase 5, backend-api): §2 sanctions Queues for background jobs —
   // this queue carries EXACTLY the ingestion-refresh contract from Phase 2
   // (src/ingestion/jobs.ts RefreshJobMessage; INGESTION_QUEUE_NAME
