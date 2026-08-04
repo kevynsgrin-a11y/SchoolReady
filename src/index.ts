@@ -8,6 +8,12 @@ import { DEFAULT_FLAGS } from "../config/flags";
 export interface Env {
   /** D1 database (fixture posture: local-only, placeholder database_id). */
   DB: D1Database;
+  /**
+   * KV namespace (Phase 2): source-health snapshots ('health:<sourceId>'),
+   * SWR cache envelopes ('cache:<sourceId>'), runtime flag overrides
+   * ('flags:overrides'). Prefixes defined in src/ingestion/source-health.ts.
+   */
+  SOURCE_KV: KVNamespace;
   FIXTURE_MODE: string;
 }
 

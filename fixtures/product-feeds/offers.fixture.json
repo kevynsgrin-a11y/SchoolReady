@@ -1,0 +1,125 @@
+{
+  "_fixture": true,
+  "fixtureSet": "fixture:retailer-offers-2026-v1",
+  "description": "Synthetic retailer product feed for the >=3-retailer basket comparison. Retailers, SKUs, UPCs, prices, and shipping are invented for the fixture-mode validation beta; no real retailer, product, or price is represented. Shared FIXTURE-UPC values across retailers exist to exercise entity resolution (Phase 4). The feed shape deliberately contains no commission or economics field (CLAUDE.md invariant 1).",
+  "generatedAt": "2026-08-01T00:00:00.000Z",
+  "provenance": {
+    "source": "fixture:retailer-offers-2026-v1",
+    "sourceType": "fixture",
+    "observedAt": "2026-08-01T00:00:00.000Z",
+    "geography": "US",
+    "transformVersion": "ingestion:affiliate_feeds@0.2.0",
+    "confidence": 1.0,
+    "limitations": "Synthetic fixture prices for the validation beta. Never render as real market prices; no purchase decision may be based on these numbers."
+  },
+  "records": [
+    {
+      "retailerSlug": "fixture-mart",
+      "retailerName": "Fixture Mart",
+      "sku": "FXM-GLUE-06",
+      "title": "Fixture Brand Washable Glue Sticks, 6 Pack (Fixture)",
+      "upc": "FIXTURE-UPC-0001",
+      "priceCents": 199,
+      "currency": "USD",
+      "availability": "in_stock",
+      "shippingCents": 0,
+      "deepLinkUrl": "https://example.com/fixture/fixture-mart/FXM-GLUE-06"
+    },
+    {
+      "retailerSlug": "fixture-mart",
+      "retailerName": "Fixture Mart",
+      "sku": "FXM-NB-WR-01",
+      "title": "Fixture Wide Ruled Composition Notebook, 100 Sheets (Fixture)",
+      "upc": "FIXTURE-UPC-0002",
+      "priceCents": 129,
+      "currency": "USD",
+      "availability": "in_stock",
+      "shippingCents": 0,
+      "deepLinkUrl": "https://example.com/fixture/fixture-mart/FXM-NB-WR-01"
+    },
+    {
+      "retailerSlug": "fixture-mart",
+      "retailerName": "Fixture Mart",
+      "sku": "FXM-CRAY-24",
+      "title": "Fixture Crayons, 24 Count (Fixture)",
+      "upc": "FIXTURE-UPC-0003",
+      "priceCents": 149,
+      "currency": "USD",
+      "availability": "limited",
+      "shippingCents": 0,
+      "deepLinkUrl": "https://example.com/fixture/fixture-mart/FXM-CRAY-24"
+    },
+    {
+      "retailerSlug": "fixture-depot",
+      "retailerName": "Fixture Depot",
+      "sku": "FXD-70119",
+      "title": "Fixture Brand Glue Stick 6-Pack (Fixture)",
+      "upc": "FIXTURE-UPC-0001",
+      "priceCents": 219,
+      "currency": "USD",
+      "availability": "in_stock",
+      "shippingCents": 599,
+      "deepLinkUrl": "https://example.com/fixture/fixture-depot/FXD-70119"
+    },
+    {
+      "retailerSlug": "fixture-depot",
+      "retailerName": "Fixture Depot",
+      "sku": "FXD-70241",
+      "title": "Fixture Composition Notebook, Wide Ruled (Fixture)",
+      "upc": "FIXTURE-UPC-0002",
+      "priceCents": 99,
+      "currency": "USD",
+      "availability": "in_stock",
+      "shippingCents": 599,
+      "deepLinkUrl": "https://example.com/fixture/fixture-depot/FXD-70241"
+    },
+    {
+      "retailerSlug": "fixture-depot",
+      "retailerName": "Fixture Depot",
+      "sku": "FXD-70388",
+      "title": "Fixture 24-Count Crayon Box (Fixture)",
+      "upc": "FIXTURE-UPC-0003",
+      "priceCents": 139,
+      "currency": "USD",
+      "availability": "out_of_stock",
+      "shippingCents": 599,
+      "deepLinkUrl": "https://example.com/fixture/fixture-depot/FXD-70388"
+    },
+    {
+      "retailerSlug": "fixture-supply-co",
+      "retailerName": "Fixture Supply Co",
+      "sku": "FSC-A-118",
+      "title": "Fixture Washable Glue Sticks, Pack of 6 (Fixture)",
+      "upc": "FIXTURE-UPC-0001",
+      "priceCents": 249,
+      "currency": "USD",
+      "availability": "in_stock",
+      "shippingCents": null,
+      "deepLinkUrl": "https://example.com/fixture/fixture-supply-co/FSC-A-118"
+    },
+    {
+      "retailerSlug": "fixture-supply-co",
+      "retailerName": "Fixture Supply Co",
+      "sku": "FSC-A-231",
+      "title": "Fixture Wide Ruled Notebook, 100 Sheets (Fixture)",
+      "upc": "FIXTURE-UPC-0002",
+      "priceCents": 119,
+      "currency": "USD",
+      "availability": "in_stock",
+      "shippingCents": null,
+      "deepLinkUrl": "https://example.com/fixture/fixture-supply-co/FSC-A-231"
+    },
+    {
+      "retailerSlug": "fixture-supply-co",
+      "retailerName": "Fixture Supply Co",
+      "sku": "FSC-A-377",
+      "title": "Fixture Crayon Set, 24 Colors (Fixture)",
+      "upc": "FIXTURE-UPC-0003",
+      "priceCents": 159,
+      "currency": "USD",
+      "availability": "in_stock",
+      "shippingCents": null,
+      "deepLinkUrl": "https://example.com/fixture/fixture-supply-co/FSC-A-377"
+    }
+  ]
+}

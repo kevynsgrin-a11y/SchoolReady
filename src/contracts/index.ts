@@ -9,3 +9,7 @@ export * from "./product";
 export * from "./school";
 export * from "./requirement";
 export * from "./household";
+export * from "./source";
+export * from "./recall";
+export * from "./tax-holiday";
+export * from "./offer";

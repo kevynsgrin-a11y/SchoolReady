@@ -1,0 +1,67 @@
+{
+  "_fixture": true,
+  "fixtureSet": "fixture:tax-holidays-2026-v1",
+  "description": "Fixture 2026 back-to-school sales-tax-holiday calendar. Window dates, category coverage, and price caps are modeled on the typical statutory structure of state sales-tax holidays (real states, realistic category/cap shapes) but are FIXTURE PLACEHOLDERS: nothing here has been verified against any state revenue department. Info URLs point to example.com, never to state sites, so fixture data cannot masquerade as verified guidance.",
+  "generatedAt": "2026-08-01T00:00:00.000Z",
+  "provenance": {
+    "source": "fixture:tax-holidays-2026-v1",
+    "sourceType": "fixture",
+    "observedAt": "2026-08-01T00:00:00.000Z",
+    "geography": "US",
+    "transformVersion": "ingestion:state_tax_holidays@0.2.0",
+    "confidence": 0.5,
+    "limitations": "Fixture calendar for the validation beta. Dates and caps are placeholders modeled on typical statutory structure and are NOT verified against state revenue departments. Not tax advice; must render with a fixture caveat and never as verified eligibility."
+  },
+  "records": [
+    {
+      "state": "TX",
+      "year": 2026,
+      "startsOn": "2026-08-07",
+      "endsOn": "2026-08-09",
+      "infoUrl": "https://example.com/fixture/tax-holidays/TX",
+      "categories": [
+        { "category": "clothing", "priceCapCents": 10000 },
+        { "category": "footwear", "priceCapCents": 10000 },
+        { "category": "school_supplies", "priceCapCents": 10000 },
+        { "category": "backpacks", "priceCapCents": 10000 }
+      ]
+    },
+    {
+      "state": "FL",
+      "year": 2026,
+      "startsOn": "2026-08-01",
+      "endsOn": "2026-08-31",
+      "infoUrl": "https://example.com/fixture/tax-holidays/FL",
+      "categories": [
+        { "category": "clothing", "priceCapCents": 10000 },
+        { "category": "school_supplies", "priceCapCents": 5000 },
+        { "category": "computers", "priceCapCents": 150000 }
+      ]
+    },
+    {
+      "state": "OH",
+      "year": 2026,
+      "startsOn": "2026-08-01",
+      "endsOn": "2026-08-14",
+      "infoUrl": "https://example.com/fixture/tax-holidays/OH",
+      "categories": [
+        { "category": "clothing", "priceCapCents": 50000 },
+        { "category": "school_supplies", "priceCapCents": 50000 },
+        { "category": "other", "priceCapCents": 50000 }
+      ]
+    },
+    {
+      "state": "SC",
+      "year": 2026,
+      "startsOn": "2026-08-07",
+      "endsOn": "2026-08-09",
+      "infoUrl": "https://example.com/fixture/tax-holidays/SC",
+      "categories": [
+        { "category": "clothing", "priceCapCents": null },
+        { "category": "footwear", "priceCapCents": null },
+        { "category": "school_supplies", "priceCapCents": null },
+        { "category": "computers", "priceCapCents": null }
+      ]
+    }
+  ]
+}

@@ -225,12 +225,29 @@ describe("PII — §1.7 (no PII columns anywhere)", () => {
     db.close();
   });
 
-  it("household-linked tables carry no size or free-text label columns", () => {
+  // Gate finding P1-2 (phase-1-gate.md, extended in Phase 2): the free-text
+  // guard now (a) also catches a bare `name` column, and (b) discovers
+  // household-linked tables structurally — any table whose name matches
+  // /household|entitlement/ OR that carries a foreign key into households /
+  // household_members (supply_lists, list_assignments, inventory_items, and
+  // any future table) — instead of relying on table naming alone.
+  it("household-linked tables (discovered via FKs) carry no size or free-text label columns", () => {
     const db = newMigratedDb();
+    const householdLinked = applicationTables(db).filter(
+      (t) =>
+        /household|entitlement/.test(t) ||
+        tableForeignKeys(db, t).some((fk) =>
+          /^(households|household_members)$/.test(fk.table),
+        ),
+    );
+    // Sanity: FK discovery actually broadened coverage beyond name matching.
+    expect(householdLinked).toContain("supply_lists");
+    expect(householdLinked).toContain("inventory_items");
+    expect(householdLinked).toContain("list_assignments");
     const offenders: string[] = [];
-    for (const table of applicationTables(db).filter((t) => /household|entitlement/.test(t))) {
+    for (const table of householdLinked) {
       for (const col of tableColumns(db, table)) {
-        if (/(^|_)(size|label|title|note|notes|nickname)$/i.test(col.name)) {
+        if (/(^|_)(name|size|label|title|note|notes|nickname)$/i.test(col.name)) {
           offenders.push(`${table}.${col.name}`);
         }
       }

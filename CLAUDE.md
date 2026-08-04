@@ -133,7 +133,7 @@ Vitest + @cloudflare/vitest-pool-workers, Playwright, axe-core, Lighthouse CI.
 |-------|-------|--------|
 | 0 Foundation | orchestrator | **Complete** — gate passed (docs/handoffs/gates/phase-0-gate.md) |
 | 1 Data contracts | data-architect | **Complete** — gate passed (docs/handoffs/gates/phase-1-gate.md) |
-| 2 Ingestion | ingestion-engineer | Not started |
+| 2 Ingestion | ingestion-engineer | **Complete** — gate passed (docs/handoffs/gates/phase-2-gate.md) |
 | 3 Parsing | parser-engineer | Not started |
 | 4 Algorithms | algorithm-engineer | Not started |
 | 5 API | backend-api | Not started |

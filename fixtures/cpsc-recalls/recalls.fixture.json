@@ -1,0 +1,83 @@
+{
+  "_fixture": true,
+  "fixtureSet": "fixture:cpsc-recalls-2026-v1",
+  "description": "Synthetic recall samples in the CPSC Recall REST API field shape (RecallID, RecallNumber, RecallDate, Title, Description, URL, LastPublishDate, NumberOfUnits, Products[], Hazards[], Remedies[]). Every recall, product, brand, and identifier is invented for the fixture-mode validation beta; no real recall or manufacturer is represented. ConsumerContact fields are intentionally absent from the consumed shape.",
+  "generatedAt": "2026-08-01T00:00:00.000Z",
+  "provenance": {
+    "source": "fixture:cpsc-recalls-2026-v1",
+    "sourceType": "fixture",
+    "observedAt": "2026-08-01T00:00:00.000Z",
+    "geography": "US",
+    "transformVersion": "ingestion:cpsc_recalls@0.2.0",
+    "confidence": 1.0,
+    "limitations": "Synthetic fixture data for the validation beta. These recalls do not exist; URLs point to example.com. Never surface as real safety information."
+  },
+  "records": [
+    {
+      "RecallID": "FIXTURE-990001",
+      "RecallNumber": "FX-26-101",
+      "RecallDate": "2026-07-10",
+      "LastPublishDate": "2026-07-12",
+      "Title": "Fixture Brand 16 oz Stainless Water Bottles Recalled Due to Elevated Lead Levels (Fixture Sample)",
+      "Description": "The base solder of the fixture water bottle can contain elevated lead levels. This is an invented sample record for the validation beta.",
+      "URL": "https://example.com/fixture/recalls/FX-26-101",
+      "NumberOfUnits": null,
+      "Products": [
+        {
+          "Name": "Fixture Brand 16 oz Stainless Steel Water Bottle",
+          "Description": "Sold in four fixture colors for the sample dataset.",
+          "Model": "FX-WB-16",
+          "UPC": "FIXTURE-UPC-0007"
+        }
+      ],
+      "Hazards": [{ "Name": "Lead exposure hazard (fixture sample)" }],
+      "Remedies": [{ "Name": "Refund" }]
+    },
+    {
+      "RecallID": "FIXTURE-990002",
+      "RecallNumber": "FX-26-102",
+      "RecallDate": "2026-06-24",
+      "LastPublishDate": null,
+      "Title": "Fixture Supply Co Clip-On Book Lights Recalled Due to Fire Hazard (Fixture Sample)",
+      "Description": "The fixture book light's battery compartment can overheat. This is an invented sample record for the validation beta.",
+      "URL": "https://example.com/fixture/recalls/FX-26-102",
+      "NumberOfUnits": 12000,
+      "Products": [
+        {
+          "Name": "Fixture Supply Co Clip-On Book Light",
+          "Description": "Battery-powered clip light in the sample dataset.",
+          "Model": "FX-BL-02",
+          "UPC": "FIXTURE-UPC-0031"
+        }
+      ],
+      "Hazards": [{ "Name": "Fire hazard (fixture sample)" }],
+      "Remedies": [{ "Name": "Replace" }]
+    },
+    {
+      "RecallID": "FIXTURE-990003",
+      "RecallNumber": "FX-26-103",
+      "RecallDate": "2026-05-30",
+      "LastPublishDate": "2026-06-02",
+      "Title": "Fixture Mart Folding Scissors Recalled Due to Laceration Hazard (Fixture Sample)",
+      "Description": "The fixture folding scissors can open unexpectedly. This is an invented sample record for the validation beta.",
+      "URL": "https://example.com/fixture/recalls/FX-26-103",
+      "NumberOfUnits": 3500,
+      "Products": [
+        {
+          "Name": "Fixture Mart Folding Safety Scissors, 5 inch",
+          "Description": "Blunt-tip folding scissors in the sample dataset.",
+          "Model": "FX-SC-05",
+          "UPC": "FIXTURE-UPC-0058"
+        },
+        {
+          "Name": "Fixture Mart Folding Safety Scissors, 7 inch",
+          "Description": "Pointed-tip folding scissors in the sample dataset.",
+          "Model": "FX-SC-07",
+          "UPC": "FIXTURE-UPC-0059"
+        }
+      ],
+      "Hazards": [{ "Name": "Laceration hazard (fixture sample)" }],
+      "Remedies": [{ "Name": "Refund" }, { "Name": "Replace" }]
+    }
+  ]
+}

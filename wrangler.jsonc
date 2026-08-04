@@ -18,8 +18,20 @@
       "database_id": "00000000-0000-0000-0000-000000000000",
       "migrations_dir": "migrations"
     }
+  ],
+  // KV (Phase 2, ingestion-engineer): one namespace for the §2-sanctioned
+  // source-health snapshots ('health:<sourceId>'), stale-while-revalidate
+  // cache envelopes ('cache:<sourceId>'), and runtime flag overrides
+  // ('flags:overrides') — key prefixes in src/ingestion/source-health.ts.
+  // Fixture posture: placeholder id (all zeros), local-only like D1.
+  "kv_namespaces": [
+    {
+      "binding": "SOURCE_KV",
+      "id": "00000000000000000000000000000000"
+    }
   ]
-  // KV, Queues, R2 (transient upload buffer w/ TTL), and Durable Objects
-  // bindings land with their owning phases (2, 3, 5) — each must be
-  // justified in that phase's handoff per §2.
+  // Queues, R2 (transient upload buffer w/ TTL), and Durable Objects
+  // bindings land with their owning phases (3, 5) — each must be justified
+  // in that phase's handoff per §2. The ingestion-refresh queue contract
+  // (src/ingestion/jobs.ts) is provisioned in Phase 5 with the API worker.
 }
