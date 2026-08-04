@@ -90,16 +90,19 @@ export function renderHousehold(state: HouseholdScreenState): Screen {
       inventory.items.length === 0
         ? html`<p>${HOUSEHOLD.inventoryEmpty}</p>`
         : html`<p class="muted">${HOUSEHOLD.inventoryListed(inventory.items.length)}</p><ul class="plain-list">${joinHtml(
-            inventory.items.map((item, i) =>
-              renderFact({
-                provenanceIds: item.provenanceIds,
-                provenance: envelope.provenance,
-                withLine: false,
-                render: () =>
-                  html`<li class="list-row"><span class="row-ordinal">${i + 1}.</span><span>${
-                    getLexiconEntry(item.productTypeSlug)?.displayName ?? item.productTypeSlug
-                  }</span><span class="text-data">${item.quantity} (${CONDITION_LABELS[item.condition]})</span></li>`,
-              }),
+            inventory.items.map(
+              (item, i) =>
+                // [A11y — Phase 11] <li> wraps the guard call so a refusal
+                // notice is a valid list child (see plan.ts planLine).
+                html`<li class="fact-row">${renderFact({
+                  provenanceIds: item.provenanceIds,
+                  provenance: envelope.provenance,
+                  withLine: false,
+                  render: () =>
+                    html`<div class="list-row"><span class="row-ordinal">${i + 1}.</span><span>${
+                      getLexiconEntry(item.productTypeSlug)?.displayName ?? item.productTypeSlug
+                    }</span><span class="text-data">${item.quantity} (${CONDITION_LABELS[item.condition]})</span></div>`,
+                })}</li>`,
             ),
           )}</ul>`;
     return [

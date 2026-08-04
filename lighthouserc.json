@@ -3,9 +3,8 @@
     "collect": {
       "staticDistDir": "dist",
       "numberOfRuns": 3,
-      "settings": {
-        "preset": "mobile"
-      }
+      "_comment": "Mobile emulation + mobile throttling are Lighthouse's DEFAULTS; the earlier settings.preset='mobile' was not a valid CLI preset (choices: perf|experimental|desktop) and made every collect run exit 1. Found and fixed in the first real execution (Phase 11, gate finding P7-4).",
+      "settings": {}
     },
     "assert": {
       "assertions": {

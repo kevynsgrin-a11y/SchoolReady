@@ -18,6 +18,8 @@ export const COMMON = {
   skipToContent: "Skip to main content",
   fixtureNotice:
     "Validation beta: every price, list, and signal on this page comes from labeled synthetic fixture data, not live feeds.",
+  /** [A11y — Phase 11] Landmark name for the fixture ribbon (axe "region"). */
+  fixtureNoticeLabel: "Data source notice",
   navHome: "Home",
   navIntake: "Add a list",
   navPlan: "Shopping plan",
@@ -360,6 +362,10 @@ export const SAFETY = {
     "CPSC recall matches for school products. Safety warnings always render above everything else on every page, and no payment or setting can hide them.",
   checkLegend: "Check a product's UPC",
   checkLabel: "UPC from the product's barcode",
+  /** [A11y — Phase 11] Format hint (WCAG 3.3.2/3.3.3): the digit range
+   *  interpolates from the same constants as the input's pattern. */
+  checkHint: (minDigits: number, maxDigits: number): string =>
+    `Type the ${minDigits} to ${maxDigits} digits printed under the barcode, without spaces or dashes.`,
   checkSubmit: "Check this UPC against recalls",
   matches: (n: number): string => `${n} recall ${plural(n, "match", "matches")} for this UPC`,
   noMatch:

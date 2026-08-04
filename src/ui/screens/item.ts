@@ -49,12 +49,16 @@ export function renderItem(state: ItemScreenState, productSlug: string): Screen 
         body: recallBanner({
           title: SAFETY.matches(check.matches.length),
           body: html`<ul class="plain-list">${joinHtml(
-            check.matches.map((m) =>
-              renderFact({
-                provenanceIds: m.provenanceIds,
-                provenance: data.recallCheck!.provenance,
-                render: () => html`<li><strong>${m.recall.title}</strong></li>`,
-              }),
+            check.matches.map(
+              (m) =>
+                // [A11y — Phase 11] <li> wraps the guard call so the fact,
+                // its provenance line, and a refusal are valid list children
+                // (see plan.ts planLine).
+                html`<li>${renderFact({
+                  provenanceIds: m.provenanceIds,
+                  provenance: data.recallCheck!.provenance,
+                  render: () => html`<strong>${m.recall.title}</strong>`,
+                })}</li>`,
             ),
           )}</ul><p>${SAFETY.credit}</p>`,
         }),

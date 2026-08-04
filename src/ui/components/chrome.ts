@@ -85,7 +85,10 @@ function footer(active: NavKey | null): Html {
 
 function fixtureRibbon(fixtureMode: boolean): Html {
   if (!fixtureMode) return raw("");
-  return html`<div class="fixture-ribbon" role="note">${icon("circle-alert", { size: 14, stroke: 1.75 })}<span>${COMMON.fixtureNotice}</span></div>`;
+  // [A11y — Phase 11] The ribbon sits above the header, outside every
+  // landmark; the named <aside> gives screen-reader users a landmark route
+  // to it (axe "region", moderate). The note role stays on the ribbon.
+  return html`<aside aria-label="${COMMON.fixtureNoticeLabel}"><div class="fixture-ribbon" role="note">${icon("circle-alert", { size: 14, stroke: 1.75 })}<span>${COMMON.fixtureNotice}</span></div></aside>`;
 }
 
 /** Hidden until the enhancement layer detects connection loss. */

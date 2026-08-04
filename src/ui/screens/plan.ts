@@ -51,11 +51,16 @@ function planLine(
   index: number,
   provenance: Record<string, ProvenanceRecord>,
 ): Html {
-  return renderFact({
+  // [A11y — Phase 11] The <li> wraps the guard call so the fact body, its
+  // provenance line, AND a guard refusal are all valid list children —
+  // renderFact appends a <p> sibling (and refusals render a <div>), which
+  // previously landed as direct children of the <ol> (invalid list markup,
+  // axe rule "list"). Same fix in checklist/household/account/item.
+  return html`<li class="fact-row">${renderFact({
     provenanceIds: line.provenanceIds,
     provenance,
     render: () =>
-      html`<li class="list-row"><span class="row-ordinal">${index + 1}.</span><div><span class="row-name">${lineDisplayName(line)}</span>${
+      html`<div class="list-row"><span class="row-ordinal">${index + 1}.</span><div><span class="row-name">${lineDisplayName(line)}</span>${
         line.mixedShareability ? html`<p class="row-detail">${PLAN.mixedShareability}</p>` : null
       }${netRequiredStack({
         requiredLabel: PLAN.requiredLine,
@@ -69,8 +74,8 @@ function planLine(
         wholeUnitsLabel: PLAN.toBuyWholeLine,
         wholeUnits: line.unitsToBuy,
         requiredReceipt: perMemberReceipt(line),
-      })}</div><div class="row-badges">${line.optionality === "required" ? requiredBadge() : optionalBadge()}</div></li>`,
-  });
+      })}</div><div class="row-badges">${line.optionality === "required" ? requiredBadge() : optionalBadge()}</div></div>`,
+  })}</li>`;
 }
 
 export function renderPlan(state: PlanScreenState): Screen {

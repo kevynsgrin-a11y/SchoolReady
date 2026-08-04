@@ -27,6 +27,10 @@ export interface SafetyData {
 
 export type SafetyScreenState = ScreenState<SafetyData>;
 
+/** GS1 barcode digit range (EAN-8 through GTIN-14) — single source for the
+ *  input's pattern AND its visible format hint (WCAG 3.3.2/3.3.3). */
+const UPC_DIGITS = { min: 8, max: 14 } as const;
+
 function upcForm(): Html {
   return form({
     action: "/safety",
@@ -36,7 +40,15 @@ function upcForm(): Html {
       html`<fieldset><legend>${SAFETY.checkLegend}</legend>${field({
         id: "upc",
         label: SAFETY.checkLabel,
-        control: textInput({ id: "upc", name: "upc", inputmode: "numeric", pattern: "[0-9]{8,14}", required: true }),
+        hint: SAFETY.checkHint(UPC_DIGITS.min, UPC_DIGITS.max),
+        control: textInput({
+          id: "upc",
+          name: "upc",
+          inputmode: "numeric",
+          pattern: `[0-9]{${UPC_DIGITS.min},${UPC_DIGITS.max}}`,
+          required: true,
+          hinted: true,
+        }),
       })}${button({ label: SAFETY.checkSubmit, icon: "search" })}</fieldset>`,
     ],
   });

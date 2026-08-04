@@ -48,14 +48,17 @@ function alertsBlock(alerts: ApiOk<AlertsData>): ReturnType<typeof html> {
     alerts.data.subscriptions.length === 0
       ? html`<p>${ACCOUNT.alertsEmpty}</p>`
       : html`<p class="muted">${ACCOUNT.alertsListed(alerts.data.subscriptions.length)}</p><ul class="plain-list">${joinHtml(
-          alerts.data.subscriptions.map((sub, i) =>
-            renderFact({
-              provenanceIds: sub.provenanceIds,
-              provenance: alerts.provenance,
-              withLine: false,
-              render: () =>
-                html`<li class="list-row"><span class="row-ordinal">${i + 1}.</span><span>${icon("bell", { size: 20 })} ${ALERT_LABELS[sub.alertKind]}</span><span class="text-data-s muted">${sub.productTypeSlug ?? ""}</span></li>`,
-            }),
+          alerts.data.subscriptions.map(
+            (sub, i) =>
+              // [A11y — Phase 11] <li> wraps the guard call so a refusal
+              // notice is a valid list child (see plan.ts planLine).
+              html`<li class="fact-row">${renderFact({
+                provenanceIds: sub.provenanceIds,
+                provenance: alerts.provenance,
+                withLine: false,
+                render: () =>
+                  html`<div class="list-row"><span class="row-ordinal">${i + 1}.</span><span>${icon("bell", { size: 20 })} ${ALERT_LABELS[sub.alertKind]}</span><span class="text-data-s muted">${sub.productTypeSlug ?? ""}</span></div>`,
+              })}</li>`,
           ),
         )}</ul>`;
   return html`<h2>${ACCOUNT.alertsTitle}</h2><p>${ACCOUNT.alertsLead}</p>${listed}${form({

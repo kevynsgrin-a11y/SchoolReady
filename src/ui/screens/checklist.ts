@@ -29,15 +29,18 @@ function checkRow(
   index: number,
   provenance: Parameters<typeof renderFact>[0]["provenance"],
 ): Html {
-  return renderFact({
+  // [A11y — Phase 11] <li> wraps the guard call so a refusal notice is a
+  // valid list child (see plan.ts planLine). data-line-key stays on the row
+  // element app.js targets via closest("[data-line-key]").
+  return html`<li class="fact-row">${renderFact({
     provenanceIds: line.provenanceIds,
     provenance,
     withLine: false,
     render: () =>
-      html`<li class="check-row" data-line-key="${line.key}"><input class="checkbox" type="checkbox" id="check-${index}" data-check-item><label for="check-${index}"><span class="row-name">${lineDisplayName(line)}</span></label><div class="row-badges"><span class="text-data">${CHECKLIST.itemToBuy(line.unitsToBuy)}</span>${
+      html`<div class="check-row" data-line-key="${line.key}"><input class="checkbox" type="checkbox" id="check-${index}" data-check-item><label for="check-${index}"><span class="row-name">${lineDisplayName(line)}</span></label><div class="row-badges"><span class="text-data">${CHECKLIST.itemToBuy(line.unitsToBuy)}</span>${
         line.optionality === "required" ? requiredBadge() : optionalBadge()
-      }</div></li>`,
-  });
+      }</div></div>`,
+  })}</li>`;
 }
 
 export function renderChecklist(state: ChecklistScreenState, options: ChecklistOptions): Screen {

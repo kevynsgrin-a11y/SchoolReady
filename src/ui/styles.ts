@@ -66,6 +66,13 @@ ${typeStepClasses()}
 
 /* Focus: every interactive element gets the visible ring (direction §11). */
 :focus-visible { outline: var(--focus-ring-width) solid var(--color-action); outline-offset: var(--focus-ring-offset); }
+/* [A11y — Phase 11] On solid safety/restriction chrome the Chalk Green ring
+   is invisible (1.02:1 on Recall Red, 1.16:1 on Policy Violet — measured in
+   docs/a11y/audit-phase-11.md). Inside those banners the ring uses the
+   banner's own white foreground (6.5:1 / 7.5:1); geometry unchanged.
+   Deviation from a literal reading of direction §11 flagged for
+   design-director review in the Phase 11 handoff. */
+.banner-recall :focus-visible, .banner-restricted :focus-visible { outline-color: #FFFFFF; }
 .skip-link { position: absolute; left: var(--space-4); top: -64px; background: var(--color-surface); color: var(--color-ink); padding: var(--space-3); border-radius: var(--radius-2); z-index: 30; transition: none; }
 .skip-link:focus { top: var(--space-2); }
 
@@ -120,6 +127,11 @@ ${typeStepClasses()}
 
 /* Provenance line (§1.4) — a designed element, not fine print to hide. */
 .provenance-line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; color: var(--color-graphite); font-family: var(--font-data); font-size: var(--text-data-s-size); line-height: var(--text-data-s-line); letter-spacing: var(--text-data-s-tracking); margin: var(--space-1) 0 var(--space-3); }
+/* [A11y — Phase 11] Provenance lines rendered inside solid safety chrome
+   inherit the banner's white foreground: Graphite measured 1.5:1 on Recall
+   Red (axe serious, live safety intercept) — white measures 6.5:1 / 7.5:1.
+   The §1.4 line stays fully visible; only its color adapts to the fill. */
+.banner-recall .provenance-line, .banner-restricted .provenance-line { color: #FFFFFF; }
 .provenance-limitations { flex-basis: 100%; }
 .provenance-corrected { color: var(--color-action); }
 
@@ -159,6 +171,12 @@ ${typeStepClasses()}
 /* List rows: loose-leaf texture — 1px Rule Blue separators, numbered gutter. */
 .list-rows { list-style: none; padding: 0; margin: 0; }
 .list-row { display: grid; grid-template-columns: 32px 1fr auto; gap: var(--space-2); align-items: start; padding: var(--space-3) 0; border-bottom: 1px solid var(--color-rule); min-height: 56px; }
+/* [A11y — Phase 11] .fact-row is the <li> wrapper around guard-checked rows
+   (plan/checklist/household/account): the Rule Blue separator moves to the
+   wrapper so the row, its provenance line, or a refusal notice all sit above
+   the same loose-leaf rule. Purely structural; visual grammar unchanged. */
+.fact-row { border-bottom: 1px solid var(--color-rule); }
+.fact-row .list-row, .fact-row .check-row { border-bottom: none; }
 .row-ordinal { font-family: var(--font-data); font-size: var(--text-data-s-size); color: var(--color-graphite); }
 .row-name { position: relative; display: inline-block; }
 .list-row.checked { color: var(--color-graphite); }
