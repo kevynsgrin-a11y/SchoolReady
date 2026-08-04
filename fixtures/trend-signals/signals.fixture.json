@@ -1,0 +1,105 @@
+{
+  "_fixture": true,
+  "fixtureSet": "fixture:trend-signals-2026-v1",
+  "description": "Synthetic trend-signal observation windows for the Phase 4 trend evidence engine. Every product, signal family series, sponsored share, and geography is invented for the fixture-mode validation beta; no real search, social, retail, editorial, or review data is represented. Series are constructed so the robust-z arithmetic is hand-checkable (median 5, MAD 1 for the rising series; median 10, MAD 1 for the cooling series).",
+  "generatedAt": "2026-08-01T00:00:00.000Z",
+  "provenance": {
+    "source": "fixture:trend-signals-2026-v1",
+    "sourceType": "fixture",
+    "observedAt": "2026-08-01T00:00:00.000Z",
+    "geography": "US",
+    "transformVersion": "algorithms:trend@0.1.0",
+    "confidence": 1.0,
+    "limitations": "Synthetic fixture signal data for the validation beta. These observations do not exist; no trend label derived from them may render as a real market claim."
+  },
+  "records": [
+    {
+      "productSlug": "fixture-gel-pen",
+      "family": "search_interest",
+      "geography": "US",
+      "sponsoredShare": 0,
+      "values": [4, 5, 6, 5, 4, 5, 20],
+      "latestObservedAt": "2026-08-01T00:00:00.000Z"
+    },
+    {
+      "productSlug": "fixture-gel-pen",
+      "family": "social_engagement",
+      "geography": "US",
+      "sponsoredShare": 0.2,
+      "values": [4, 5, 6, 5, 4, 5, 20],
+      "latestObservedAt": "2026-08-01T00:00:00.000Z"
+    },
+    {
+      "productSlug": "fixture-gel-pen",
+      "family": "retail_sellthrough",
+      "geography": "US",
+      "sponsoredShare": 0,
+      "values": [4, 5, 6, 5, 4, 5, 20],
+      "latestObservedAt": "2026-08-01T00:00:00.000Z"
+    },
+    {
+      "productSlug": "fixture-sticker-set",
+      "family": "search_interest",
+      "geography": "US",
+      "sponsoredShare": 0,
+      "values": [4, 5, 6, 5, 4, 5, 20],
+      "latestObservedAt": "2026-08-01T00:00:00.000Z"
+    },
+    {
+      "productSlug": "fixture-clip-light",
+      "family": "search_interest",
+      "geography": "US",
+      "sponsoredShare": 1,
+      "values": [4, 5, 6, 5, 4, 5, 20],
+      "latestObservedAt": "2026-08-01T00:00:00.000Z"
+    },
+    {
+      "productSlug": "fixture-clip-light",
+      "family": "social_engagement",
+      "geography": "US",
+      "sponsoredShare": 0.9,
+      "values": [4, 5, 6, 5, 4, 5, 20],
+      "latestObservedAt": "2026-08-01T00:00:00.000Z"
+    },
+    {
+      "productSlug": "fixture-clip-light",
+      "family": "editorial_coverage",
+      "geography": "US",
+      "sponsoredShare": 0.8,
+      "values": [4, 5, 6, 5, 4, 5, 20],
+      "latestObservedAt": "2026-08-01T00:00:00.000Z"
+    },
+    {
+      "productSlug": "fixture-mesh-pouch",
+      "family": "search_interest",
+      "geography": "US-TX",
+      "sponsoredShare": 0,
+      "values": [4, 5, 6, 5, 4, 5, 20],
+      "latestObservedAt": "2026-08-01T00:00:00.000Z"
+    },
+    {
+      "productSlug": "fixture-mesh-pouch",
+      "family": "social_engagement",
+      "geography": "US-TX",
+      "sponsoredShare": 0.1,
+      "values": [4, 5, 6, 5, 4, 5, 20],
+      "latestObservedAt": "2026-08-01T00:00:00.000Z"
+    },
+    {
+      "productSlug": "fixture-slap-band",
+      "family": "search_interest",
+      "geography": "US",
+      "sponsoredShare": 0,
+      "values": [10, 11, 9, 10, 11, 10, 5],
+      "latestObservedAt": "2026-08-01T00:00:00.000Z"
+    },
+    {
+      "productSlug": "fixture-slap-band",
+      "family": "social_engagement",
+      "geography": "US",
+      "sponsoredShare": 0.1,
+      "values": [10, 11, 9, 10, 11, 10, 5],
+      "latestObservedAt": "2026-08-01T00:00:00.000Z"
+    }
+  ]
+}
