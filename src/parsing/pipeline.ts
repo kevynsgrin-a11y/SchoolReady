@@ -23,7 +23,7 @@ import { sanitizeProhibitedSubstitutions } from "../contracts/constraint";
 import { provenanceDefect } from "../ingestion/provenance";
 import { isoFromMs } from "../ingestion/types";
 import type { Clock } from "../ingestion/types";
-import { getLexiconEntry, COLOR_WORDS, MATERIAL_WORDS } from "./lexicon";
+import { getBrandEntry, getLexiconEntry, COLOR_WORDS, MATERIAL_WORDS } from "./lexicon";
 import type { OcrEngine } from "./ocr";
 import { parseLine } from "./parse-line";
 import type { ParsedLineCore } from "./parse-line";
@@ -418,6 +418,14 @@ export function parseManualIntake(
     if (brandRequirement !== "generic_allowed" && !entry.requiredBrandSlug) {
       throw new ManualEntryValidationError(
         `brandRequirement "${brandRequirement}" requires requiredBrandSlug (item ${index})`,
+      );
+    }
+    // P5-1: brand slugs are vocabulary-checked like color/material — presence
+    // alone is not enough, or this field becomes a free-text channel (SS1.7).
+    // The offending value is deliberately never echoed.
+    if (entry.requiredBrandSlug != null && !getBrandEntry(entry.requiredBrandSlug)) {
+      throw new ManualEntryValidationError(
+        `requiredBrandSlug must come from the controlled brand vocabulary (item ${index})`,
       );
     }
     const lineNumber = index + 1;

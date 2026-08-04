@@ -136,7 +136,7 @@ Vitest + @cloudflare/vitest-pool-workers, Playwright, axe-core, Lighthouse CI.
 | 2 Ingestion | ingestion-engineer | **Complete** — gate passed (docs/handoffs/gates/phase-2-gate.md) |
 | 3 Parsing | parser-engineer | **Complete** — gate passed (docs/handoffs/gates/phase-3-gate.md) |
 | 4 Algorithms | algorithm-engineer | **Complete** — gate passed (docs/handoffs/gates/phase-4-gate.md) |
-| 5 API | backend-api | Not started |
+| 5 API | backend-api | **Complete** — gate passed round 2 (docs/handoffs/gates/phase-5-gate.md) |
 | 6 Design direction | design-director | **Complete** — gate passed (docs/handoffs/gates/phase-6-gate.md) |
 | 7 Frontend | frontend-engineer | Not started |
 | 8 SEO | seo-architect | Not started |

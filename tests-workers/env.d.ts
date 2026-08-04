@@ -1,4 +1,5 @@
 import type { D1Migration } from "cloudflare:test";
+import type { RefreshJobMessage } from "../src/ingestion/jobs";
 
 declare global {
   namespace Cloudflare {
@@ -9,6 +10,8 @@ declare global {
       SOURCE_KV: KVNamespace;
       /** Mirrors wrangler.jsonc (Phase 3: transient upload buffer, hard TTL). */
       UPLOAD_BUFFER: R2Bucket;
+      /** Mirrors wrangler.jsonc (Phase 5: ingestion-refresh queue producer). */
+      INGESTION_QUEUE: Queue<RefreshJobMessage>;
       FIXTURE_MODE: string;
       /** Injected by vitest.config.ts via readD1Migrations(). */
       TEST_MIGRATIONS: D1Migration[];

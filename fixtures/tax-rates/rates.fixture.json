@@ -1,0 +1,22 @@
+{
+  "_fixture": true,
+  "fixtureSet": "fixture:sales-tax-rates-2026-v1",
+  "description": "Fixture state sales-tax rate placeholders for landed-cost estimation in the fixture-mode validation beta. Rates are modeled on typical state-level rate magnitudes but are NOT verified against any revenue department, exclude local/county surtaxes entirely, and must always render as labeled estimates.",
+  "generatedAt": "2026-08-01T00:00:00.000Z",
+  "provenance": {
+    "source": "fixture:sales-tax-rates-2026-v1",
+    "sourceType": "fixture",
+    "observedAt": "2026-08-01T00:00:00.000Z",
+    "geography": "US",
+    "transformVersion": "api:catalog@0.5.0",
+    "confidence": 0.5,
+    "limitations": "Fixture placeholder rates for the validation beta. State-level only (no local surtaxes), unverified, estimate-grade. Not tax advice; totals using these rates must render as estimates with this caveat."
+  },
+  "records": [
+    { "state": "TX", "rate": 0.0825 },
+    { "state": "FL", "rate": 0.06 },
+    { "state": "OH", "rate": 0.0575 },
+    { "state": "SC", "rate": 0.06 },
+    { "state": "CA", "rate": 0.0725 }
+  ]
+}

@@ -6,8 +6,10 @@
  *  1. The transitive import closure of src/algorithms/ contains no module
  *     whose path matches a monetization pattern, contains only repo-internal
  *     modules (src/ or config/), and uses no bare package imports at all.
- *  2. The comment-stripped source of every algorithm module contains no
- *     economics identifier (commission/payout/referral/monetization/...).
+ *  2. The comment-stripped source of every module in the FULL transitive
+ *     import closure (not just the entry files — gate finding P4-2, closed
+ *     in Phase 5) contains no economics identifier
+ *     (commission/payout/referral/monetization/...).
  *
  * The behavioral half (byte-identical ranking under an injected 40%
  * commission) lives in tests/algorithms-match.test.ts.
@@ -91,9 +93,14 @@ describe("algorithms — §1.1 import-graph independence from monetization", () 
     expect(bareImports).toEqual([]);
   });
 
-  it("comment-stripped algorithm sources contain no economics identifier", () => {
+  it("comment-stripped sources of the FULL import closure contain no economics identifier (P4-2)", () => {
+    const { closure } = importClosure();
+    // Sanity: the closure is strictly larger than the entry set, so this
+    // scan genuinely covers contracts/config modules a TS-only economics
+    // field could hide in.
+    expect(closure.length).toBeGreaterThan(entryFiles.length);
     const offenders: string[] = [];
-    for (const file of entryFiles) {
+    for (const file of closure) {
       const code = stripComments(readFileSync(file, "utf8"));
       const hits = code.match(/\b(commission|payout|referral|monetization|kickback)\b/gi);
       if (hits) offenders.push(`${relative(repoRoot, file)}: ${hits.join(", ")}`);

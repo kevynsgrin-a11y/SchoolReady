@@ -45,9 +45,29 @@
       "binding": "UPLOAD_BUFFER",
       "bucket_name": "k8-planner-upload-buffer-fixture"
     }
-  ]
-  // Queues and Durable Objects bindings land with their owning phase (5) —
-  // each must be justified in that phase's handoff per §2. The
-  // ingestion-refresh queue contract (src/ingestion/jobs.ts) is provisioned
-  // in Phase 5 with the API worker.
+  ],
+  // Queues (Phase 5, backend-api): §2 sanctions Queues for background jobs —
+  // this queue carries EXACTLY the ingestion-refresh contract from Phase 2
+  // (src/ingestion/jobs.ts RefreshJobMessage; INGESTION_QUEUE_NAME
+  // = 'ingestion-refresh'). The consumer re-seeds the SWR caches through the
+  // same adapter + circuit-breaker pipelines the API reads from; in fixture
+  // posture this re-labels fixture envelopes (no network — live sources stay
+  // flag-OFF and their adapters are throwing stubs). No Durable Objects are
+  // provisioned: §2 reserves DO for live family-collaboration sessions,
+  // which do not exist in this beta (rate limiting is KV token buckets).
+  "queues": {
+    "producers": [
+      {
+        "binding": "INGESTION_QUEUE",
+        "queue": "ingestion-refresh"
+      }
+    ],
+    "consumers": [
+      {
+        "queue": "ingestion-refresh",
+        "max_batch_size": 10,
+        "max_batch_timeout": 30
+      }
+    ]
+  }
 }
