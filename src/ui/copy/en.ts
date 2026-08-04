@@ -456,26 +456,37 @@ export const ACCOUNT = {
   privacyBody:
     "An anonymous cookie links this browser to its plan. Child names, teacher names, classrooms, addresses, exact sizes, and budgets are stripped at the door and never stored, logged, or sent to anyone.",
   exportTitle: "Take your plan with you",
-  exportBody: "The printable checklist is the export: every net quantity with its math.",
+  exportBody:
+    "Two exports, no questions asked: the printable checklist for paper, and a machine-readable file of everything this session stores — lists, children as numbers, inventory, alerts, and any Season Pass record, each with its source record.",
   exportCta: "Open the printable checklist",
-  deleteTitle: "Walk away",
+  exportJsonCta: "Download everything as a JSON file",
+  deleteTitle: "Delete everything",
   deleteBody:
-    "Clearing this site's cookies detaches this browser from its plan permanently; nothing identifies you to re-link it. A one-click server-side purge ships with the compliance phase of this beta and will appear here.",
+    "The button below removes every row this session ever created — lists, requirements, children (ordinals only; that is all we ever had), inventory, alerts, any Season Pass record, and their source records — in a single pass. Nothing identifies you, so nothing can be re-linked or recovered afterward.",
+  deleteSubmit: "Delete all of this session's data",
+  deleteNote:
+    "Clearing this site's cookies alone also detaches this browser from its plan; the button additionally erases the server-side rows.",
   passTitle: "Season Pass",
   passActive: "Season Pass active: extras are ad-free. Core data was identical before you paid.",
   passNone: "No Season Pass. Nothing on the core plan is behind it.",
 } as const;
 
 /**
- * PROVISIONAL COPY — Phase 9 (monetization-engineer). compliance-officer
- * (Phase 10) owns the final FTC-facing wording of every string in this block
- * and must review it before ANY live affiliate link or paid checkout ships.
+ * FINAL COPY — reviewed by compliance-officer (Phase 10). Standard applied:
+ * FTC Endorsement Guides (16 CFR Part 255) + the FTC's online-disclosure
+ * guidance — a material connection must be disclosed clearly and
+ * conspicuously, in plain language, placed WITH the link it qualifies.
+ * Adjacency is structural (Phase 9: renderMonetizedLink emits anchor +
+ * disclosure atomically; footnote-only placement is test-failing), so these
+ * strings complete the disclosure, they do not carry it alone. Any change to
+ * this block — and the FIRST live affiliate link or live checkout — requires
+ * a fresh compliance-officer review recorded in a handoff.
  * Voice §10 applies; no urgency theatrics, no scarcity, no countdowns (§5).
  */
 export const MONETIZATION = {
   /** Rendered ADJACENT to every monetized link by renderMonetizedLink — never footnote-only. */
   affiliateDisclosure:
-    "Paid link: the retailer pays this site a commission if you buy through it. Commissions never change the prices shown or how options are ordered.",
+    "Paid link: this site earns a commission from the retailer if you buy through it. That never changes the price you see, how options are ordered, or what gets recommended.",
   /** Accessible name prefix for monetized anchors ("<retailer> (paid link)"). */
   affiliateLinkSuffix: "(paid link)",
   passExplainer:
@@ -485,6 +496,73 @@ export const MONETIZATION = {
     "Checkout is switched off in this validation beta: no payment can be taken and no card form exists. This entry point activates when payments launch.",
   passActiveThrough: (date: string): string => `Active through ${date}.`,
   passAdFree: "Sponsored units are off for you, including on editorial pages.",
+} as const;
+
+/**
+ * Privacy policy — Phase 10 (compliance-officer). The whole policy, in plain
+ * language, rendered on the alerts-and-privacy page. Claims here are backed
+ * by code and tests, not aspiration: the citations live in
+ * docs/compliance/coppa-posture.md and the Phase 10 handoff.
+ */
+export const PRIVACY = {
+  title: "Privacy policy",
+  lead:
+    "The whole policy, in plain words. There is no account here, so most of the usual policy does not apply — this is everything.",
+  collectTitle: "What this session stores",
+  collectItems: [
+    "A random cookie so this browser can find its own plan. The server keeps only a hash of it, linked to nothing about you.",
+    "The supply-list items you confirmed, saved as structured fields from fixed vocabularies — never the pasted text or the photo itself.",
+    "Children as numbers — child 1, child 2 — with an optional grade. There is no name field anywhere to fill in.",
+    "What you marked as already owned, your alert choices, an optional US state for tax math, and a Season Pass record if one exists.",
+  ],
+  neverTitle: "What is never collected, stored, or shared",
+  neverItems: [
+    "Child names and teacher names",
+    "Classroom and room numbers",
+    "Home or school addresses — geography stops at the state, and only if you set it",
+    "Exact clothing or shoe sizes",
+    "Household budgets and income",
+    "Gift recipients",
+    "Email addresses and phone numbers — alerts are in-app only, so there is no field to type one into",
+  ],
+  retentionTitle: "How long things are kept",
+  retentionUpload: (minutes: number): string =>
+    `Uploaded photos and PDFs are parsed and then deleted within ${minutes} minutes, whether parsing succeeded or not. Names, teachers, and room numbers are stripped before anything renders back to you.`,
+  retentionSession:
+    "Everything else is kept only so your plan is there when you come back. Nothing expires it automatically in this beta; the delete control below removes all of it whenever you choose.",
+  thirdPartiesTitle: "Third parties",
+  thirdPartiesBody:
+    "Nothing you enter is sold, shared, or sent to a third party. Server logs are restricted to an allowlist of opaque ids and counts, so free text cannot end up in a log even by mistake.",
+  childrenTitle: "Children",
+  childrenBody:
+    "This is a tool for parents and caregivers. There are no child accounts, no login of any kind, no data collected from or about an identifiable child, and no targeted advertising — to anyone, of any age.",
+  rightsTitle: "Your controls",
+  rightsBody:
+    "Export everything this session stores as a machine-readable file, or delete it all in one pass — both are below, and neither requires contacting anyone.",
+} as const;
+
+/**
+ * Standing disclaimers — Phase 10 (compliance-officer). Plain-language
+ * limits for the four fact categories users act on; each restates what the
+ * provenance chrome already shows per fact (§1.4) and what suppression
+ * already enforces (§1.5).
+ */
+export const DISCLAIMERS = {
+  title: "Plain-language disclaimers",
+  lead:
+    "Every number on this site carries its source and date. These are the standing limits to hold us to.",
+  pricesTitle: "Prices and stock",
+  prices:
+    "Prices and stock can be out of date the moment after they are read. Every price shows when its source was checked; stale readings are flagged or hidden rather than passed off as current.",
+  taxTitle: "Tax math",
+  tax:
+    "Sales tax and tax-holiday effects are estimates from published rates and calendars, always shown with their assumptions. Verify holiday dates with your state's revenue department before counting on them.",
+  trendsTitle: "Trend labels",
+  trends:
+    "Trend labels are evidence summaries, not endorsements. When the evidence is thin, the label says so — 'not enough evidence' is the default, not a failure.",
+  recallsTitle: "Recall checks",
+  recalls:
+    "Recall matching runs against published CPSC data and every match links to the official CPSC notice. A no-match result means no match in that data — it is not a safety endorsement of the product.",
 } as const;
 
 export const STATUS = {

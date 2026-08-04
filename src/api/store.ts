@@ -709,3 +709,108 @@ export async function refundEntitlementByPaymentRef(
     .bind(paymentRef)
     .run();
 }
+
+/* ------------------------------------------------------------------ */
+/* Data rights (Phase 10): export + one-pass deletion                  */
+/* ------------------------------------------------------------------ */
+
+export interface MemberRow {
+  ordinal: number;
+  grade_level: GradeLevel | null;
+  provenance_id: string;
+}
+
+/** Ordinal-only members with grade (§1.7: there is no name column to read). */
+export async function listMembers(
+  db: D1Like,
+  householdId: string,
+): Promise<MemberRow[]> {
+  const { results } = await db
+    .prepare(
+      `SELECT ordinal, grade_level, provenance_id
+       FROM household_members WHERE household_id = ? ORDER BY ordinal`,
+    )
+    .bind(householdId)
+    .all<MemberRow>();
+  return results;
+}
+
+/** Every entitlement row for the household (export shows refunds too). */
+export async function listEntitlements(
+  db: D1Like,
+  householdId: string,
+): Promise<EntitlementRow[]> {
+  const { results } = await db
+    .prepare(
+      `SELECT id, kind, status, valid_from, valid_until, provenance_id
+       FROM entitlements WHERE household_id = ? ORDER BY created_at`,
+    )
+    .bind(householdId)
+    .all<EntitlementRow>();
+  return results;
+}
+
+/**
+ * Every table holding session-linked user rows, as (table, WHERE clause on
+ * ?1 = householdId) pairs in FK-SAFE DELETION ORDER (children first). The
+ * one-pass purge below both counts and deletes through this single list, so
+ * a future user-data table must be added here — the workers deletion test
+ * walks sqlite_master and fails if a household-linked row survives a purge.
+ */
+const HOUSEHOLD_DATA_TABLES: readonly { table: string; where: string }[] = [
+  { table: "requirements", where: "list_id IN (SELECT id FROM supply_lists WHERE household_id = ?1)" },
+  { table: "list_assignments", where: "list_id IN (SELECT id FROM supply_lists WHERE household_id = ?1)" },
+  { table: "alert_subscriptions", where: "household_id = ?1" },
+  { table: "supply_lists", where: "household_id = ?1" },
+  { table: "inventory_items", where: "household_id = ?1" },
+  { table: "entitlements", where: "household_id = ?1" },
+  { table: "household_members", where: "household_id = ?1" },
+  { table: "api_sessions", where: "household_id = ?1" },
+  { table: "households", where: "id = ?1" },
+];
+
+/**
+ * §1.7 one-pass deletion: removes EVERY row linked to the household — data
+ * rows AND their per-user provenance records — in a single call. Global
+ * taxonomy rows (product_types, brands and their seed provenance) are shared
+ * vocabulary, not user data, and survive. Returns the exact number of rows
+ * removed, counted from the database before deletion (never estimated).
+ */
+export async function purgeHousehold(
+  db: D1Like,
+  householdId: string,
+): Promise<number> {
+  // 1. Collect the per-user provenance ids BEFORE the rows citing them go.
+  const provenanceIds = new Set<string>();
+  for (const { table, where } of HOUSEHOLD_DATA_TABLES) {
+    const { results } = await db
+      .prepare(`SELECT provenance_id FROM ${table} WHERE ${where}`)
+      .bind(householdId)
+      .all<{ provenance_id: string }>();
+    for (const row of results) provenanceIds.add(row.provenance_id);
+  }
+
+  // 2. Count, then delete, children-first (FKs stay satisfied throughout).
+  let rowsDeleted = 0;
+  for (const { table, where } of HOUSEHOLD_DATA_TABLES) {
+    const count = await db
+      .prepare(`SELECT COUNT(*) AS n FROM ${table} WHERE ${where}`)
+      .bind(householdId)
+      .first<{ n: number }>();
+    rowsDeleted += count?.n ?? 0;
+    await db.prepare(`DELETE FROM ${table} WHERE ${where}`).bind(householdId).run();
+  }
+
+  // 3. Delete the now-unreferenced per-user provenance records (chunked).
+  const ids = [...provenanceIds];
+  for (let i = 0; i < ids.length; i += 50) {
+    const chunk = ids.slice(i, i + 50);
+    const placeholders = chunk.map(() => "?").join(", ");
+    await db
+      .prepare(`DELETE FROM provenance WHERE id IN (${placeholders})`)
+      .bind(...chunk)
+      .run();
+  }
+  rowsDeleted += ids.length;
+  return rowsDeleted;
+}

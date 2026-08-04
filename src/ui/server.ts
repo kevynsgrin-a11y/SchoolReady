@@ -100,7 +100,7 @@ function createApiSession(request: Request, deps: ApiDeps): ApiSession {
 
 async function callApi<T>(
   session: ApiSession,
-  method: "GET" | "POST",
+  method: "GET" | "POST" | "DELETE",
   path: string,
   init?: { json?: unknown; rawBody?: BodyInit; headers?: Record<string, string> },
 ): Promise<{ status: number; body: ApiResponseBody<T> }> {
@@ -570,6 +570,23 @@ export async function handleUiRequest(request: Request, deps: ApiDeps): Promise<
         };
         const response = await callApi<CapsuleData>(session, "POST", "/api/capsule", { json: body });
         return htmlResponse(renderCapsule(stateFromResponse(response.body)), session);
+      }
+      case "/account/delete": {
+        // [Compliance — Phase 10] One-pass purge: DELETE /api/session removes
+        // every session-linked row (§1.7); the expired cookie detaches the
+        // browser. A fresh anonymous session starts only if the user returns.
+        const response = await callApi<unknown>(session, "DELETE", "/api/session");
+        if (response.body.ok) {
+          session.setCookies.push(
+            `${SESSION_COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`,
+          );
+          session.cookie = null;
+          return redirect(session, "/account");
+        }
+        return htmlResponse(
+          renderAccount(failureState(response.body), { fixtureMode: deps.flags.fixtureMode }),
+          session,
+        );
       }
       case "/account/alerts": {
         const form = await request.formData();

@@ -98,7 +98,7 @@ exist for one, an agent must say so explicitly in its handoff.
 | 3 | Viral needs ≥3 signal families | Trend-engine unit tests — algorithm-engineer, Phase 4 | **ENFORCED (Phase 4)** — single-family → insufficient_evidence, same-family dedupe, default insufficient_evidence |
 | 4 | Provenance on every fact | Provenance FK on every user-facing table + render guard — data-architect Phase 1, frontend Phase 7 | **FULLY ENFORCED (Phases 1+5+7)** — FK-discovery on live schema, API provenance gate + contract classification, UI render guard (renderFact is the only path to fact markup; refusal renders the suppression reason) |
 | 5 | Suppression beats guessing | Suppression-engine tests — algorithm-engineer, Phase 4 | **ENFORCED (Phase 4)** — all eight §1.5 triggers with reason codes; recalled offers excluded from every basket |
-| 6 | Banned claims lint | scripts/lint-banned-claims.mjs in `npm run lint` + seeded-violation test | **ENFORCED (Phase 0)** |
+| 6 | Banned claims lint | scripts/lint-banned-claims.mjs in `npm run lint` + seeded-violation test | **ENFORCED (Phase 0)** — list additions since the founding brief: "risk-free" (Phase 10 legal review) |
 | 7 | PII never persists | Upload-cycle zero-PII test — parser-engineer, Phase 3 | **ENFORCED (Phase 3)** — full-cycle seed+scan on node & real workerd (R2, D1, logs); Phase 5 must extend over its own writes (gate P3-2) |
 | 8 | No emoji iconography | scripts/lint-no-emoji.mjs in `npm run lint` + seeded-violation test | **ENFORCED (Phase 0)** |
 
@@ -141,6 +141,6 @@ Vitest + @cloudflare/vitest-pool-workers, Playwright, axe-core, Lighthouse CI.
 | 7 Frontend | frontend-engineer | **Complete** — gate passed (docs/handoffs/gates/phase-7-gate.md) |
 | 8 SEO | seo-architect | **Complete** — gate passed (docs/handoffs/gates/phase-8-gate.md) |
 | 9 Monetization | monetization-engineer | **Complete** — gate passed (docs/handoffs/gates/phase-9-gate.md) |
-| 10 Compliance | compliance-officer | Not started |
+| 10 Compliance | compliance-officer | **Complete** — gate passed (docs/handoffs/gates/phase-10-gate.md) |
 | 11 Accessibility | accessibility-qa | Not started |
 | 12 Release | release-qa | Not started |

@@ -24,7 +24,10 @@ import { button, field, form, linkButton, select } from "../components/forms";
 import { renderFact } from "../render-guard";
 import type { ScreenState } from "../state";
 import { envelopeChrome, foldState, intro, isoDate } from "./shared";
-import { ACCOUNT, MONETIZATION } from "../copy/en";
+import { ACCOUNT, DISCLAIMERS, MONETIZATION, PRIVACY } from "../copy/en";
+// [Compliance — Phase 10] The upload-retention number in the privacy policy
+// is the enforced TTL constant, never a typed-in literal.
+import { UPLOAD_BUFFER_TTL_SECONDS } from "../../parsing/upload-buffer";
 
 export interface AccountData {
   alerts: ApiOk<AlertsData>;
@@ -98,6 +101,25 @@ function seasonPassBlock(entitlements: ApiOk<EntitlementsData>, fixtureMode: boo
   return html`<h2>${icon("receipt-text", { size: 20 })} ${ACCOUNT.passTitle}</h2>${status}${checkout}<p class="muted">${entitlements.data.coreAccessNotice}</p>`;
 }
 
+/**
+ * [Compliance — Phase 10] Full plain-language privacy policy. Every claim in
+ * this copy is enforced by code/tests cited in docs/compliance/coppa-posture.md.
+ */
+function privacyBlock(): Html {
+  const items = (list: readonly string[]): Html =>
+    html`<ul>${joinHtml(list.map((item) => html`<li>${item}</li>`))}</ul>`;
+  return html`<h2>${icon("shield-check", { size: 20 })} ${PRIVACY.title}</h2><p class="lead">${PRIVACY.lead}</p><p>${ACCOUNT.privacyBody}</p><h3>${PRIVACY.collectTitle}</h3>${items(
+    PRIVACY.collectItems,
+  )}<h3>${PRIVACY.neverTitle}</h3>${items(PRIVACY.neverItems)}<h3>${PRIVACY.retentionTitle}</h3><p>${PRIVACY.retentionUpload(
+    Math.round(UPLOAD_BUFFER_TTL_SECONDS / 60),
+  )}</p><p>${PRIVACY.retentionSession}</p><h3>${PRIVACY.thirdPartiesTitle}</h3><p>${PRIVACY.thirdPartiesBody}</p><h3>${PRIVACY.childrenTitle}</h3><p>${PRIVACY.childrenBody}</p><h3>${PRIVACY.rightsTitle}</h3><p>${PRIVACY.rightsBody}</p>`;
+}
+
+/** [Compliance — Phase 10] Standing disclaimers for the four fact categories. */
+function disclaimersBlock(): Html {
+  return html`<h2>${DISCLAIMERS.title}</h2><p class="lead">${DISCLAIMERS.lead}</p><h3>${DISCLAIMERS.pricesTitle}</h3><p>${DISCLAIMERS.prices}</p><h3>${DISCLAIMERS.taxTitle}</h3><p>${DISCLAIMERS.tax}</p><h3>${DISCLAIMERS.trendsTitle}</h3><p>${DISCLAIMERS.trends}</p><h3>${DISCLAIMERS.recallsTitle}</h3><p>${DISCLAIMERS.recalls}</p>`;
+}
+
 export function renderAccount(
   state: AccountScreenState,
   options: { fixtureMode: boolean } = { fixtureMode: true },
@@ -112,19 +134,27 @@ export function renderAccount(
     const { alerts, entitlements } = envelope.data;
     return [
       { kind: "assistance_resource" as const, body: html`${envelopeChrome(alerts)}${alertsBlock(alerts)}` },
+      { kind: "content" as const, body: privacyBlock() },
+      { kind: "content" as const, body: disclaimersBlock() },
       {
         kind: "content" as const,
-        body: html`<h2>${ACCOUNT.privacyTitle}</h2><p>${ACCOUNT.privacyBody}</p>`,
-      },
-      {
-        kind: "content" as const,
-        body: html`<h2>${icon("download", { size: 20 })} ${ACCOUNT.exportTitle}</h2><p>${ACCOUNT.exportBody}</p>${linkButton(
+        body: html`<h2>${icon("download", { size: 20 })} ${ACCOUNT.exportTitle}</h2><p>${ACCOUNT.exportBody}</p><p>${linkButton(
           { label: ACCOUNT.exportCta, href: "/plan/checklist", variant: "secondary", icon: "printer" },
-        )}`,
+        )} ${linkButton(
+          { label: ACCOUNT.exportJsonCta, href: "/api/export", variant: "secondary", icon: "download" },
+        )}</p>`,
       },
       {
+        // [Compliance — Phase 10] One-pass purge: plain HTML form -> POST
+        // /account/delete -> DELETE /api/session (src/ui/server.ts).
         kind: "content" as const,
-        body: html`<h2>${icon("trash-2", { size: 20 })} ${ACCOUNT.deleteTitle}</h2><p>${ACCOUNT.deleteBody}</p>`,
+        body: html`<h2>${icon("trash-2", { size: 20 })} ${ACCOUNT.deleteTitle}</h2><p>${ACCOUNT.deleteBody}</p><p class="muted">${ACCOUNT.deleteNote}</p>${form(
+          {
+            action: "/account/delete",
+            ariaLabel: ACCOUNT.deleteTitle,
+            body: [button({ label: ACCOUNT.deleteSubmit, variant: "secondary", icon: "trash-2" })],
+          },
+        )}`,
       },
       {
         // Commercial section: always last (§1.2; composer + route scan enforce).

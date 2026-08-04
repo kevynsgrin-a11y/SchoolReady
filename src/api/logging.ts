@@ -57,6 +57,7 @@ export const LOG_FIELD_ALLOWLIST: ReadonlySet<string> = new Set([
   "alertKind",
   "subscriptionId",
   "entitlementPresent",
+  "rowsDeleted",
   "eventType",
   "queueMessageCount",
   "reason",

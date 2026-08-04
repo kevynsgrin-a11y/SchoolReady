@@ -51,6 +51,8 @@ import type {
   ConfirmListBody,
   ConfirmedRequirementInput,
   InventoryBody,
+  ListsData,
+  ExportData,
   ManualIntakeBody,
   PasteIntakeBody,
   RecallCheckBody,
@@ -66,6 +68,7 @@ import { envelopeProvenance, deriveCandidates, lookupSalesTax } from "./catalog"
 import { computeMergePlan, deriveBasketInputs } from "./plan";
 import type { MergeComputation } from "./plan";
 import { createSourcePipelines, serveSource, sourceStatus } from "./sources";
+import { KV_RATE_LIMIT_PREFIX, RATE_LIMIT_RULES } from "./rate-limit";
 import { sha256Hex } from "./session";
 import * as store from "./store";
 
@@ -297,9 +300,8 @@ async function handleConfirmList(ctx: RouteContext): Promise<RouteResult> {
   };
 }
 
-async function handleLists(ctx: RouteContext): Promise<RouteResult> {
-  if (ctx.session === null) return { data: { lists: [] } };
-  const rows = await store.listHouseholdRequirements(ctx.deps.db, ctx.session.householdId);
+/** Groups requirement join rows into the ListsData shape (also the export). */
+function aggregateLists(rows: store.RequirementJoinRow[]): ListsData["lists"] {
   const byList = new Map<
     string,
     { row: (typeof rows)[number]; requirements: Map<string, RequirementSummary>; ordinals: Set<number> }
@@ -332,7 +334,7 @@ async function handleLists(ctx: RouteContext): Promise<RouteResult> {
     });
     byList.set(row.list_id, entry);
   }
-  const lists = [...byList.values()].map((entry) => ({
+  return [...byList.values()].map((entry) => ({
     listId: entry.row.list_id,
     schoolYear: entry.row.school_year,
     gradeLevel: entry.row.grade_level as GradeLevel | null,
@@ -341,6 +343,12 @@ async function handleLists(ctx: RouteContext): Promise<RouteResult> {
     memberOrdinals: [...entry.ordinals].sort((a, b) => a - b),
     requirements: [...entry.requirements.values()],
   }));
+}
+
+async function handleLists(ctx: RouteContext): Promise<RouteResult> {
+  if (ctx.session === null) return { data: { lists: [] } };
+  const rows = await store.listHouseholdRequirements(ctx.deps.db, ctx.session.householdId);
+  const lists = aggregateLists(rows);
   const provenance = await store.getProvenanceRecords(
     ctx.deps.db,
     rows.map((r) => r.provenance_id),
@@ -895,6 +903,109 @@ async function handleStripeWebhook(ctx: RouteContext): Promise<RouteResult> {
 }
 
 /* ------------------------------------------------------------------ */
+/* Data rights (Phase 10): export + one-pass deletion                  */
+/* ------------------------------------------------------------------ */
+
+/**
+ * GET /api/export — machine-readable export of everything the anonymous
+ * session stores. §1.7 makes this short: structured requirements, ordinal
+ * members, inventory, alert kinds, entitlement windows, coarse geography.
+ * The session token hash is deliberately NOT exported (it is a credential,
+ * not user content). Without a session there is nothing to export.
+ */
+async function handleExport(ctx: RouteContext): Promise<RouteResult> {
+  const deps = ctx.deps;
+  const exportedAt = isoFromMs(deps.clock());
+  if (ctx.session === null) {
+    const empty: ExportData = {
+      exportedAt,
+      householdState: null,
+      members: [],
+      lists: [],
+      inventory: [],
+      alerts: [],
+      entitlements: [],
+    };
+    return { data: empty };
+  }
+  const householdId = ctx.session.householdId;
+  const requirementRows = await store.listHouseholdRequirements(deps.db, householdId);
+  const inventoryRows = await store.listInventory(deps.db, householdId);
+  const alertRows = await store.listAlertSubscriptions(deps.db, householdId);
+  const memberRows = await store.listMembers(deps.db, householdId);
+  const entitlementRows = await store.listEntitlements(deps.db, householdId);
+  const data: ExportData = {
+    exportedAt,
+    householdState: await store.getHouseholdState(deps.db, householdId),
+    members: memberRows.map((m) => ({
+      ordinal: m.ordinal,
+      gradeLevel: m.grade_level,
+      provenanceIds: [m.provenance_id],
+    })),
+    lists: aggregateLists(requirementRows),
+    inventory: inventoryRows.map((r) => ({
+      id: r.id,
+      productTypeSlug: r.product_type_slug,
+      quantity: r.quantity,
+      condition: r.condition,
+      provenanceIds: [r.provenance_id],
+    })),
+    alerts: alertRows.map((r) => ({
+      id: r.id,
+      alertKind: r.alert_kind,
+      productTypeSlug: r.product_type_slug,
+      listId: r.list_id,
+      provenanceIds: [r.provenance_id],
+    })),
+    entitlements: entitlementRows.map((r) => ({
+      kind: r.kind as ExportData["entitlements"][number]["kind"],
+      status: r.status as ExportData["entitlements"][number]["status"],
+      validFrom: r.valid_from,
+      validUntil: r.valid_until,
+      provenanceIds: [r.provenance_id],
+    })),
+  };
+  const provenance = await store.getProvenanceRecords(deps.db, [
+    ...requirementRows.map((r) => r.provenance_id),
+    ...inventoryRows.map((r) => r.provenance_id),
+    ...alertRows.map((r) => r.provenance_id),
+    ...memberRows.map((r) => r.provenance_id),
+    ...entitlementRows.map((r) => r.provenance_id),
+  ]);
+  return { data, provenance };
+}
+
+/**
+ * DELETE /api/session — §1.7 one-pass purge of ALL session-linked user data
+ * (lists, requirements, members, inventory, alerts, entitlements, sessions,
+ * the household row, and their per-user provenance records). Idempotent:
+ * with no session there is nothing to delete and the purge reports 0 rows.
+ * NOTE: this deliberately is NOT named /api/account — no account exists
+ * (§0), and the route-policy test enforces that no route pattern ever says
+ * so. Deleting the session IS deleting everything.
+ */
+async function handleSessionDelete(ctx: RouteContext): Promise<RouteResult> {
+  if (ctx.session === null) {
+    return { data: { purged: true as const, rowsDeleted: 0 } };
+  }
+  const deps = ctx.deps;
+  // Rate-limit buckets are keyed by session token hash: collect every hash
+  // for this household BEFORE the rows go, then drop the KV buckets too.
+  const { results: hashes } = await deps.db
+    .prepare(`SELECT token_hash FROM api_sessions WHERE household_id = ?`)
+    .bind(ctx.session.householdId)
+    .all<{ token_hash: string }>();
+  const rowsDeleted = await store.purgeHousehold(deps.db, ctx.session.householdId);
+  for (const { token_hash } of hashes) {
+    for (const rule of Object.values(RATE_LIMIT_RULES)) {
+      await deps.kv.delete?.(`${KV_RATE_LIMIT_PREFIX}${rule.bucket}:${token_hash}`);
+    }
+  }
+  deps.logger.log("session_purged", { rowsDeleted });
+  return { data: { purged: true as const, rowsDeleted } };
+}
+
+/* ------------------------------------------------------------------ */
 /* Route table                                                         */
 /* ------------------------------------------------------------------ */
 
@@ -916,6 +1027,8 @@ export const ROUTES: readonly RouteDef[] = [
   { method: "POST", pattern: "/api/recalls/check", category: "safety", session: "none", turnstile: false, rateLimit: null, entitlementGated: false, handler: handleRecallCheck },
   { method: "POST", pattern: "/api/alerts/subscribe", category: "safety", session: "ensure", turnstile: true, rateLimit: "alerts", entitlementGated: false, handler: handleAlertSubscribe },
   { method: "GET", pattern: "/api/alerts", category: "safety", session: "read", turnstile: false, rateLimit: null, entitlementGated: false, handler: handleAlertsList },
+  { method: "GET", pattern: "/api/export", category: "session", session: "read", turnstile: false, rateLimit: null, entitlementGated: false, handler: handleExport },
+  { method: "DELETE", pattern: "/api/session", category: "session", session: "read", turnstile: false, rateLimit: null, entitlementGated: false, handler: handleSessionDelete },
   { method: "GET", pattern: "/api/entitlements", category: "payments", session: "read", turnstile: false, rateLimit: null, entitlementGated: false, handler: handleEntitlements },
   { method: "POST", pattern: "/api/webhooks/stripe", category: "payments", session: "none", turnstile: false, rateLimit: null, entitlementGated: false, handler: handleStripeWebhook },
 ];

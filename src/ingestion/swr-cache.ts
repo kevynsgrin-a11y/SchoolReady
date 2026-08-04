@@ -20,6 +20,12 @@ import type { IsoTimestamp } from "../contracts/provenance";
 export interface KvLike {
   get(key: string): Promise<string | null>;
   put(key: string, value: string): Promise<void>;
+  /**
+   * Optional (kept structural for minimal test doubles); the real
+   * KVNamespace provides it. [Compliance — Phase 10] the §1.7 one-pass
+   * purge uses it to drop rate-limit buckets keyed by deleted token hashes.
+   */
+  delete?(key: string): Promise<void>;
 }
 
 /** In-memory KvLike for tests and offline fixture ingestion. */
@@ -32,6 +38,11 @@ export class MemoryKv implements KvLike {
 
   put(key: string, value: string): Promise<void> {
     this.map.set(key, value);
+    return Promise.resolve();
+  }
+
+  delete(key: string): Promise<void> {
+    this.map.delete(key);
     return Promise.resolve();
   }
 }

@@ -424,6 +424,62 @@ export interface AlertsData {
 }
 
 /* ------------------------------------------------------------------ */
+/* Data rights — export + one-pass deletion (Phase 10)                 */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Machine-readable export of EVERYTHING the anonymous session stores —
+ * and, by §1.7, everything it stores is structural: controlled-vocabulary
+ * requirements, ordinal-only members, coarse geography, alert kinds, and
+ * entitlement windows. There is nothing else to export, which is the point.
+ */
+export interface ExportData {
+  exportedAt: IsoTimestamp;
+  /** Coarse geography (state) if volunteered; never finer (§1.7). */
+  householdState: StateCode | null;
+  /** Ordinal-only children ('Child N'); no name field exists to export. */
+  members: {
+    ordinal: number;
+    gradeLevel: GradeLevel | null;
+    provenanceIds: readonly string[];
+  }[];
+  lists: {
+    listId: string;
+    schoolYear: string;
+    gradeLevel: GradeLevel | null;
+    intakeMethod: IntakeMethod;
+    verificationStatus: string;
+    memberOrdinals: number[];
+    requirements: RequirementSummary[];
+  }[];
+  inventory: InventorySummary[];
+  alerts: {
+    id: string;
+    alertKind: AlertKind;
+    productTypeSlug: string | null;
+    listId: string | null;
+    provenanceIds: readonly string[];
+  }[];
+  entitlements: {
+    kind: EntitlementKind;
+    status: EntitlementStatus;
+    validFrom: IsoTimestamp;
+    validUntil: IsoTimestamp;
+    provenanceIds: readonly string[];
+  }[];
+}
+
+/**
+ * Acknowledgement of the one-pass purge (DELETE /api/session). rowsDeleted
+ * is counted from the database, never estimated; 0 means there was no
+ * session-linked data to remove (the purge is idempotent).
+ */
+export interface SessionPurgeData {
+  purged: true;
+  rowsDeleted: number;
+}
+
+/* ------------------------------------------------------------------ */
 /* Entitlements                                                        */
 /* ------------------------------------------------------------------ */
 

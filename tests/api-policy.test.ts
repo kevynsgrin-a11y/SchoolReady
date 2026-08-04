@@ -45,6 +45,9 @@ describe("route table — §1.2: entitlements gate ad-free extras ONLY", () => {
         "GET /api/alerts",
         "GET /api/entitlements",
         "POST /api/webhooks/stripe",
+        // Phase 10 (compliance-officer) sanctioned extension: data rights.
+        "GET /api/export",
+        "DELETE /api/session",
       ].sort(),
     );
   });
@@ -133,6 +136,7 @@ describe("contracts — §1.4: fact-bearing response types carry provenanceIds (
   /** Fact-bearing via composition: must reference the named carrier type. */
   const COMPOSITES: Record<string, string> = {
     ConfirmListData: "RequirementSummary",
+    ExportData: "RequirementSummary", // Phase 10: data-rights export
     ListsData: "RequirementSummary",
     InventoryData: "InventorySummary",
     ChecklistData: "ChecklistLine",
@@ -176,6 +180,8 @@ describe("contracts — §1.4: fact-bearing response types carry provenanceIds (
     AlertKind: "closed enum",
     AlertSubscribeData: "creation ack; the fact-bearing read is AlertsData",
     WebhookAckData: "webhook ack; the fact-bearing read is EntitlementsData",
+    SessionPurgeData:
+      "Phase 10 deletion ack: a purge count, no world facts (the deleted data is gone by definition)",
   };
 
   it("every exported contract type is explicitly classified — additions cannot opt out silently", () => {

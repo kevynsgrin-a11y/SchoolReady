@@ -56,7 +56,8 @@ export const PROTECTED_CATEGORIES: readonly RouteCategory[] = [
 ];
 
 export interface RoutePolicy {
-  method: "GET" | "POST";
+  /** DELETE exists for exactly one surface: the §1.7 one-pass data purge. */
+  method: "GET" | "POST" | "DELETE";
   /** Path pattern, e.g. '/api/trend/:slug'. */
   pattern: string;
   category: RouteCategory;
