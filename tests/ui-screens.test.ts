@@ -228,6 +228,45 @@ describe("plan — merged shopping list states", () => {
     expect(page).toContain("glue sticks"); // the good line still renders
   });
 
+  it("P7-1: a guard-refused line never contributes to the whole-plan totals, and the exclusion is announced", () => {
+    // Refused line carries distinctive units: leaking them would make gross
+    // 18 + 7 = 25 and whole-units 13 + 7 = 20.
+    const bad = mergeLine({
+      key: "marker|*|*|*",
+      productTypeSlug: "marker",
+      provenanceIds: ["prov:gone"],
+      grossRequiredUnits: 7,
+      usableInventoryUnits: 0,
+      reserveUnits: 0,
+      netRequiredUnits: 7,
+      unitsToBuy: 7,
+      perMember: [{ memberOrdinal: 1, requiredUnits: 7 }],
+    });
+    const page = doc(
+      renderPlan({ kind: "ready", envelope: envelope(mergeData([mergeLine(), bad]), provs) }),
+    );
+    const wholePlan = page.slice(page.indexOf("Whole plan"));
+    // (a) the refused line's units are NOT in the grand total
+    expect(wholePlan).not.toContain(">25<");
+    expect(wholePlan).not.toContain(">20<");
+    // (b) a visible suppression note explains the smaller total
+    expect(wholePlan).toContain("suppression-notice");
+    expect(wholePlan).toContain("1 required line was held back above");
+    // (c) guard-passing lines still total correctly, with provenance chrome
+    expect(wholePlan).toContain(">18<"); // gross from the good line only
+    expect(wholePlan).toContain(">12.5<"); // net
+    expect(wholePlan).toContain(">13<"); // whole units
+    expect(wholePlan).toContain("provenance-line");
+  });
+
+  it("P7-1: when every required line is refused, the whole-plan stack refuses instead of totaling zero", () => {
+    const bad = mergeLine({ provenanceIds: ["prov:gone"] });
+    const page = doc(renderPlan({ kind: "ready", envelope: envelope(mergeData([bad]), provs) }));
+    const wholePlan = page.slice(page.indexOf("Whole plan"));
+    expect(wholePlan).not.toContain("net-required-stack");
+    expect(wholePlan).toContain("suppression-notice");
+  });
+
   it("stale/downgraded list findings render as visible suppression notes (§1.5)", () => {
     const data: MergeData = {
       ...mergeData([mergeLine()]),

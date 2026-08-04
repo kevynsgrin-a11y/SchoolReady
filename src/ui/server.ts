@@ -70,6 +70,10 @@ import type { AccountData } from "./screens/account";
 import { renderStatus } from "./screens/status";
 import { html } from "./html";
 import { ERRORS, COMMON } from "./copy/en";
+// [SEO — Phase 8] The single SEO integration surface (src/seo/integration.ts):
+// per-request robots/canonical/JSON-LD resolution + generated crawl assets.
+import { resolveSeoForRequest, seoAssetResponse } from "../seo/integration";
+import type { ResolvedSeo } from "../seo/integration";
 
 /* ------------------------------------------------------------------ */
 /* In-process API client                                               */
@@ -81,10 +85,17 @@ interface ApiSession {
   cookie: string | null;
   /** Set-Cookie headers to replay onto the final HTML response. */
   setCookies: string[];
+  /** [SEO — Phase 8] Robots/canonical/JSON-LD resolved once per request. */
+  seo: ResolvedSeo;
 }
 
 function createApiSession(request: Request, deps: ApiDeps): ApiSession {
-  return { deps, cookie: request.headers.get("cookie"), setCookies: [] };
+  return {
+    deps,
+    cookie: request.headers.get("cookie"),
+    setCookies: [],
+    seo: resolveSeoForRequest(request), // [SEO — Phase 8]
+  };
 }
 
 async function callApi<T>(
@@ -119,9 +130,12 @@ async function callApi<T>(
 
 function htmlResponse(screen: Screen, session: ApiSession, status = 200): Response {
   const headers = new Headers({ "content-type": "text/html; charset=utf-8" });
+  // [SEO — Phase 8] X-Robots-Tag mirrors the meta robots tag; the head
+  // itself (robots/canonical/JSON-LD) rides in through renderDocument.
+  headers.set("x-robots-tag", session.seo.robots);
   for (const cookie of session.setCookies) headers.append("set-cookie", cookie);
   return new Response(
-    renderDocument(screen, { fixtureMode: session.deps.flags.fixtureMode }),
+    renderDocument(screen, { fixtureMode: session.deps.flags.fixtureMode, seo: session.seo }),
     { status, headers },
   );
 }
@@ -378,6 +392,10 @@ export async function handleUiRequest(request: Request, deps: ApiDeps): Promise<
         headers: { "content-type": "application/manifest+json", "cache-control": "public, max-age=3600" },
       });
     }
+    // [SEO — Phase 8] Generated crawl assets: /sitemap.xml (indexable routes
+    // only) and /robots.txt. All content comes from src/seo/sitemap.ts.
+    const crawlAsset = seoAssetResponse(url);
+    if (crawlAsset) return crawlAsset;
 
     switch (path) {
       case "/":

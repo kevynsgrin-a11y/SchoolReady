@@ -42,6 +42,9 @@ for (const page of site.staticPages()) {
 mkdirSync(join(dist, "assets"), { recursive: true });
 writeFileSync(join(dist, "assets", "ui.css"), site.staticStylesheet());
 writeFileSync(join(dist, "manifest.webmanifest"), site.staticManifest());
+// [SEO — Phase 8] Crawl assets from src/seo/ (indexable routes only).
+writeFileSync(join(dist, "sitemap.xml"), site.staticSitemap());
+writeFileSync(join(dist, "robots.txt"), site.staticRobots());
 cpSync(join(repoRoot, "public", "assets"), join(dist, "assets"), { recursive: true });
 cpSync(join(repoRoot, "public", "sw.js"), join(dist, "sw.js"));
 rmSync(bundle, { force: true });

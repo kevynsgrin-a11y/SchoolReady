@@ -104,12 +104,29 @@ export function renderSections(sections: readonly PageSection[]): Html {
   );
 }
 
+/**
+ * [SEO — Phase 8] Per-route head resolved by src/seo/integration.ts
+ * (route-metadata map). When absent the document defaults to noindex with
+ * no canonical and no structured data — safe by default: a page rendered
+ * outside the server integration cannot accidentally enter the index.
+ */
+export interface SeoHead {
+  readonly robots: string;
+  readonly canonicalUrl: string | null;
+  /** Serialized JSON-LD blocks (already validated + "<"-escaped). */
+  readonly jsonLd: readonly string[];
+}
+
+const SEO_DEFAULT: SeoHead = { robots: "noindex", canonicalUrl: null, jsonLd: [] };
+
 export interface RenderOptions {
   fixtureMode: boolean;
+  seo?: SeoHead;
 }
 
 /** Composes the full HTML document for a screen. */
 export function renderDocument(screen: Screen, options: RenderOptions): string {
+  const seo = options.seo ?? SEO_DEFAULT;
   const doc = html`<!doctype html>
 <html lang="en">
 <head>
@@ -117,7 +134,10 @@ export function renderDocument(screen: Screen, options: RenderOptions): string {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${screen.title} — ${BRAND.name}</title>
 <meta name="description" content="${screen.description}">
-<meta name="theme-color" content="#F7F8F2">
+<meta name="robots" content="${seo.robots}">
+${seo.canonicalUrl ? html`<link rel="canonical" href="${seo.canonicalUrl}">
+` : null}${joinHtml(seo.jsonLd.map((block) => html`<script type="application/ld+json">${raw(block)}</script>
+`))}<meta name="theme-color" content="#F7F8F2">
 <link rel="stylesheet" href="/assets/ui.css">
 <link rel="manifest" href="/manifest.webmanifest">
 </head>

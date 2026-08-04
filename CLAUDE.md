@@ -139,7 +139,7 @@ Vitest + @cloudflare/vitest-pool-workers, Playwright, axe-core, Lighthouse CI.
 | 5 API | backend-api | **Complete** — gate passed round 2 (docs/handoffs/gates/phase-5-gate.md) |
 | 6 Design direction | design-director | **Complete** — gate passed (docs/handoffs/gates/phase-6-gate.md) |
 | 7 Frontend | frontend-engineer | **Complete** — gate passed (docs/handoffs/gates/phase-7-gate.md) |
-| 8 SEO | seo-architect | Not started |
+| 8 SEO | seo-architect | **Complete** — gate passed (docs/handoffs/gates/phase-8-gate.md) |
 | 9 Monetization | monetization-engineer | Not started |
 | 10 Compliance | compliance-officer | Not started |
 | 11 Accessibility | accessibility-qa | Not started |
