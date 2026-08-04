@@ -1,0 +1,32 @@
+{
+  "_fixture": true,
+  "fixtureSet": "fixture:retailer-logistics-2026-v1",
+  "description": "Synthetic per-retailer logistics assumptions for the fixture-mode basket comparison: typical delivery-day estimates and shipping geography for the three invented fixture retailers. Every number is a fixture placeholder rendered as a LABELED ASSUMPTION, never a delivery promise; no real retailer or carrier is represented.",
+  "generatedAt": "2026-08-01T00:00:00.000Z",
+  "provenance": {
+    "source": "fixture:retailer-logistics-2026-v1",
+    "sourceType": "fixture",
+    "observedAt": "2026-08-01T00:00:00.000Z",
+    "geography": "US",
+    "transformVersion": "api:catalog@0.5.0",
+    "confidence": 0.5,
+    "limitations": "Synthetic fixture delivery estimates for the validation beta. These are labeled assumptions for feasibility math only — never a delivery promise, never verified against any carrier or retailer."
+  },
+  "records": [
+    {
+      "retailerSlug": "fixture-mart",
+      "estimatedDeliveryDays": 2,
+      "shipsToStates": null
+    },
+    {
+      "retailerSlug": "fixture-depot",
+      "estimatedDeliveryDays": 5,
+      "shipsToStates": null
+    },
+    {
+      "retailerSlug": "fixture-supply-co",
+      "estimatedDeliveryDays": null,
+      "shipsToStates": null
+    }
+  ]
+}

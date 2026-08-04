@@ -16,6 +16,9 @@ export const BANNED_CLAIMS = [
   "guaranteed delivery",
   "safest",
   "best for every child",
+  // Added by Phase 10 legal review (compliance-officer recommendation,
+  // orchestrator-applied at gate; see docs/handoffs/gates/phase-10-gate.md).
+  "risk-free",
 ] as const;
 
 export type BannedClaim = (typeof BANNED_CLAIMS)[number];

@@ -8,16 +8,22 @@
     "node": ">=20"
   },
   "scripts": {
-    "lint": "eslint . && node scripts/lint-banned-claims.mjs && node scripts/lint-no-emoji.mjs",
+    "lint": "eslint . && node scripts/lint-banned-claims.mjs src public && node scripts/lint-no-emoji.mjs src public",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.tests.json --noEmit && tsc -p tsconfig.workers-tests.json --noEmit",
     "test": "vitest run",
+    "test:a11y": "playwright test",
+    "test:e2e": "playwright test --config=playwright.e2e.config.ts",
+    "build": "node scripts/build-static.mjs",
     "verify": "npm run lint && npm run typecheck && npm run test"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.12.1",
     "@cloudflare/vitest-pool-workers": "^0.20.1",
     "@cloudflare/workers-types": "^5.20260801.1",
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.62.1",
     "@types/node": "^26.1.2",
+    "axe-core": "^4.12.1",
     "eslint": "^10.8.0",
     "globals": "^17.8.0",
     "typescript": "^6.0.3",

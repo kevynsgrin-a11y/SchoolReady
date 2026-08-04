@@ -2,6 +2,10 @@ node_modules/
 dist/
 .wrangler/
 coverage/
+# Phase 11 accessibility tooling artifacts (generated per run)
+test-results/
+playwright-report/
+.lighthouseci/
 .env
 .env.*
 *.log

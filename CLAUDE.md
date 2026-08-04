@@ -94,11 +94,11 @@ exist for one, an agent must say so explicitly in its handoff.
 | # | Invariant | Enforcement | Status |
 |---|-----------|-------------|--------|
 | 1 | Commission never ranks | Commission-injection byte-identical test — algorithm-engineer, Phase 4 | **ENFORCED (Phase 4)** — byte-identical injection test + BFS import-closure ban; Phase 5 wires match→basket (gate P4-3), Phase 9 re-verified by boundary test |
-| 2 | No ads before critical content | Route-tree scan test — monetization-engineer, Phase 9 | Deferred (no routes yet) |
+| 2 | No ads before critical content | Route-tree scan test — monetization-engineer, Phase 9 | **FULLY ENFORCED (Phases 7+9)** — slot registry + render-time errors (P7) and rendered-byte route scan across every route/state with per-rule counterexamples (P9); zero slots mounted |
 | 3 | Viral needs ≥3 signal families | Trend-engine unit tests — algorithm-engineer, Phase 4 | **ENFORCED (Phase 4)** — single-family → insufficient_evidence, same-family dedupe, default insufficient_evidence |
-| 4 | Provenance on every fact | Provenance FK on every user-facing table + render guard — data-architect Phase 1, frontend Phase 7 | **Schema half ENFORCED (Phase 1)** — FK-discovery test on live schema + real D1; render guard due Phase 7 |
+| 4 | Provenance on every fact | Provenance FK on every user-facing table + render guard — data-architect Phase 1, frontend Phase 7 | **FULLY ENFORCED (Phases 1+5+7)** — FK-discovery on live schema, API provenance gate + contract classification, UI render guard (renderFact is the only path to fact markup; refusal renders the suppression reason) |
 | 5 | Suppression beats guessing | Suppression-engine tests — algorithm-engineer, Phase 4 | **ENFORCED (Phase 4)** — all eight §1.5 triggers with reason codes; recalled offers excluded from every basket |
-| 6 | Banned claims lint | scripts/lint-banned-claims.mjs in `npm run lint` + seeded-violation test | **ENFORCED (Phase 0)** |
+| 6 | Banned claims lint | scripts/lint-banned-claims.mjs in `npm run lint` + seeded-violation test | **ENFORCED (Phase 0)** — list additions since the founding brief: "risk-free" (Phase 10 legal review) |
 | 7 | PII never persists | Upload-cycle zero-PII test — parser-engineer, Phase 3 | **ENFORCED (Phase 3)** — full-cycle seed+scan on node & real workerd (R2, D1, logs); Phase 5 must extend over its own writes (gate P3-2) |
 | 8 | No emoji iconography | scripts/lint-no-emoji.mjs in `npm run lint` + seeded-violation test | **ENFORCED (Phase 0)** |
 
@@ -136,11 +136,11 @@ Vitest + @cloudflare/vitest-pool-workers, Playwright, axe-core, Lighthouse CI.
 | 2 Ingestion | ingestion-engineer | **Complete** — gate passed (docs/handoffs/gates/phase-2-gate.md) |
 | 3 Parsing | parser-engineer | **Complete** — gate passed (docs/handoffs/gates/phase-3-gate.md) |
 | 4 Algorithms | algorithm-engineer | **Complete** — gate passed (docs/handoffs/gates/phase-4-gate.md) |
-| 5 API | backend-api | Not started |
+| 5 API | backend-api | **Complete** — gate passed round 2 (docs/handoffs/gates/phase-5-gate.md) |
 | 6 Design direction | design-director | **Complete** — gate passed (docs/handoffs/gates/phase-6-gate.md) |
-| 7 Frontend | frontend-engineer | Not started |
-| 8 SEO | seo-architect | Not started |
-| 9 Monetization | monetization-engineer | Not started |
-| 10 Compliance | compliance-officer | Not started |
-| 11 Accessibility | accessibility-qa | Not started |
-| 12 Release | release-qa | Not started |
+| 7 Frontend | frontend-engineer | **Complete** — gate passed (docs/handoffs/gates/phase-7-gate.md) |
+| 8 SEO | seo-architect | **Complete** — gate passed (docs/handoffs/gates/phase-8-gate.md) |
+| 9 Monetization | monetization-engineer | **Complete** — gate passed (docs/handoffs/gates/phase-9-gate.md) |
+| 10 Compliance | compliance-officer | **Complete** — gate passed (docs/handoffs/gates/phase-10-gate.md) |
+| 11 Accessibility | accessibility-qa | **Complete** — gate passed (docs/handoffs/gates/phase-11-gate.md) |
+| 12 Release | release-qa | **Complete** — final gate passed (docs/handoffs/gates/phase-12-gate.md); release BLOCKED on 8 human-owned launch items (docs/release/launch-checklist.md) |

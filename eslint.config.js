@@ -19,4 +19,11 @@ export default tseslint.config(
       globals: { ...globals.node },
     },
   },
+  {
+    // Phase 7 client enhancement layer + service worker (plain JS, browser).
+    files: ["public/**/*.js"],
+    languageOptions: {
+      globals: { ...globals.browser, ...globals.serviceworker },
+    },
+  },
 );

@@ -1,5 +1,10 @@
 {
   // Worker name is deliberately brand-neutral (§0 brand isolation).
+  // PRODUCTION DEPLOY (backtoacademy.com): every *_id/database_id below is
+  // still a local fixture-posture placeholder. Before setting the
+  // DEPLOY_ENABLED repo variable (.github/workflows/ci.yml), replace them
+  // with real Cloudflare resource IDs — exact click-by-click steps in
+  // docs/release/backtoacademy-launch-runbook.md.
   "name": "k8-planner",
   "main": "src/index.ts",
   "compatibility_date": "2026-07-01",
@@ -45,9 +50,37 @@
       "binding": "UPLOAD_BUFFER",
       "bucket_name": "k8-planner-upload-buffer-fixture"
     }
-  ]
-  // Queues and Durable Objects bindings land with their owning phase (5) —
-  // each must be justified in that phase's handoff per §2. The
-  // ingestion-refresh queue contract (src/ingestion/jobs.ts) is provisioned
-  // in Phase 5 with the API worker.
+  ],
+  // Static Assets (Phase 7, frontend-engineer): §2 stack is Workers +
+  // Static Assets. public/ carries ONLY static UI files — self-hosted OFL
+  // font binaries (+ licenses), the progressive-enhancement script, and the
+  // offline service worker. HTML is rendered by the Worker; requests that
+  // match no asset fall through to it (default run order).
+  "assets": {
+    "directory": "public"
+  },
+  // Queues (Phase 5, backend-api): §2 sanctions Queues for background jobs —
+  // this queue carries EXACTLY the ingestion-refresh contract from Phase 2
+  // (src/ingestion/jobs.ts RefreshJobMessage; INGESTION_QUEUE_NAME
+  // = 'ingestion-refresh'). The consumer re-seeds the SWR caches through the
+  // same adapter + circuit-breaker pipelines the API reads from; in fixture
+  // posture this re-labels fixture envelopes (no network — live sources stay
+  // flag-OFF and their adapters are throwing stubs). No Durable Objects are
+  // provisioned: §2 reserves DO for live family-collaboration sessions,
+  // which do not exist in this beta (rate limiting is KV token buckets).
+  "queues": {
+    "producers": [
+      {
+        "binding": "INGESTION_QUEUE",
+        "queue": "ingestion-refresh"
+      }
+    ],
+    "consumers": [
+      {
+        "queue": "ingestion-refresh",
+        "max_batch_size": 10,
+        "max_batch_timeout": 30
+      }
+    ]
+  }
 }

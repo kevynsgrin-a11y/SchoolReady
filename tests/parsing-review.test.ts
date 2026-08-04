@@ -199,6 +199,65 @@ describe("manual entry validates against controlled vocabularies — throws, nev
     ).toThrow(/requires requiredBrandSlug/);
   });
 
+  it("rejects a requiredBrandSlug outside the brand lexicon WITHOUT echoing it (P5-1)", () => {
+    // PII-shaped free text on the brand field must be refused like
+    // color/material — presence-only checking left this a free-text channel.
+    const attempt = () =>
+      parseManualIntake(
+        {
+          intakeId: "m",
+          items: [
+            {
+              productTypeSlug: "glue-stick",
+              quantity: 1,
+              brandRequirement: "required",
+              requiredBrandSlug: "Zephyrine Quatermain",
+            },
+          ],
+        },
+        opts,
+      );
+    expect(attempt).toThrow(ManualEntryValidationError);
+    expect(attempt).toThrow(/controlled brand vocabulary \(item 0\)/);
+    let thrown: unknown;
+    try {
+      attempt();
+    } catch (error) {
+      thrown = error;
+    }
+    expect(String(thrown)).not.toContain("Zephyrine");
+
+    // Even with generic_allowed, a non-lexicon slug never slips through.
+    expect(() =>
+      parseManualIntake(
+        {
+          intakeId: "m",
+          items: [
+            { productTypeSlug: "glue-stick", quantity: 1, requiredBrandSlug: "prose" },
+          ],
+        },
+        opts,
+      ),
+    ).toThrow(/controlled brand vocabulary/);
+
+    // A genuine lexicon slug still passes and lands on the draft.
+    const outcome = parseManualIntake(
+      {
+        intakeId: "m",
+        items: [
+          {
+            productTypeSlug: "glue-stick",
+            quantity: 1,
+            brandRequirement: "preferred",
+            requiredBrandSlug: "elmers",
+          },
+        ],
+      },
+      opts,
+    );
+    expect(outcome.items[0]!.draft.requiredBrandSlug).toBe("elmers");
+  });
+
   it("rejects non-positive and non-integer quantities", () => {
     for (const quantity of [0, -1, 2.5]) {
       expect(() =>
