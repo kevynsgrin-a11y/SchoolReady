@@ -1,0 +1,94 @@
+{
+  "_fixture": true,
+  "fixtureSet": "fixture:price-history-2026-v1",
+  "description": "Synthetic retailer price-history observations for the Phase 4 deal-integrity module. Every price, date, pack count, and SKU reference is invented for the fixture-mode validation beta and aligns with the synthetic retailers of fixture:retailer-offers-2026-v1; no real market price is represented. The eight-point glue series is constructed so nearest-rank percentile arithmetic is hand-checkable.",
+  "generatedAt": "2026-08-01T00:00:00.000Z",
+  "provenance": {
+    "source": "fixture:price-history-2026-v1",
+    "sourceType": "fixture",
+    "observedAt": "2026-08-01T00:00:00.000Z",
+    "geography": "US",
+    "transformVersion": "algorithms:deal-integrity@0.1.0",
+    "confidence": 1.0,
+    "limitations": "Synthetic fixture price history for the validation beta. Never render as real market prices; no deal verdict from these numbers may be presented as a real-market claim."
+  },
+  "records": [
+    {
+      "upc": "FIXTURE-UPC-0001",
+      "retailerSlug": "fixture-mart",
+      "observedAt": "2026-06-08T00:00:00.000Z",
+      "priceCents": 199,
+      "packCount": 6
+    },
+    {
+      "upc": "FIXTURE-UPC-0001",
+      "retailerSlug": "fixture-mart",
+      "observedAt": "2026-06-15T00:00:00.000Z",
+      "priceCents": 189,
+      "packCount": 6
+    },
+    {
+      "upc": "FIXTURE-UPC-0001",
+      "retailerSlug": "fixture-mart",
+      "observedAt": "2026-06-22T00:00:00.000Z",
+      "priceCents": 209,
+      "packCount": 6
+    },
+    {
+      "upc": "FIXTURE-UPC-0001",
+      "retailerSlug": "fixture-mart",
+      "observedAt": "2026-06-29T00:00:00.000Z",
+      "priceCents": 199,
+      "packCount": 6
+    },
+    {
+      "upc": "FIXTURE-UPC-0001",
+      "retailerSlug": "fixture-mart",
+      "observedAt": "2026-07-06T00:00:00.000Z",
+      "priceCents": 249,
+      "packCount": 6
+    },
+    {
+      "upc": "FIXTURE-UPC-0001",
+      "retailerSlug": "fixture-mart",
+      "observedAt": "2026-07-13T00:00:00.000Z",
+      "priceCents": 199,
+      "packCount": 6
+    },
+    {
+      "upc": "FIXTURE-UPC-0001",
+      "retailerSlug": "fixture-mart",
+      "observedAt": "2026-07-20T00:00:00.000Z",
+      "priceCents": 219,
+      "packCount": 6
+    },
+    {
+      "upc": "FIXTURE-UPC-0001",
+      "retailerSlug": "fixture-mart",
+      "observedAt": "2026-07-27T00:00:00.000Z",
+      "priceCents": 189,
+      "packCount": 6
+    },
+    {
+      "upc": "FIXTURE-UPC-0002",
+      "retailerSlug": "fixture-mart",
+      "observedAt": "2026-07-01T00:00:00.000Z",
+      "priceCents": 129,
+      "packCount": 1
+    },
+    {
+      "upc": "FIXTURE-UPC-0002",
+      "retailerSlug": "fixture-mart",
+      "observedAt": "2026-07-10T00:00:00.000Z",
+      "priceCents": 119,
+      "packCount": 1
+    },
+    {
+      "upc": "FIXTURE-UPC-0002",
+      "retailerSlug": "fixture-mart",
+      "observedAt": "2026-07-20T00:00:00.000Z",
+      "priceCents": 124,
+      "packCount": 1
+    }
+  ]
+}

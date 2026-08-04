@@ -93,11 +93,11 @@ exist for one, an agent must say so explicitly in its handoff.
 
 | # | Invariant | Enforcement | Status |
 |---|-----------|-------------|--------|
-| 1 | Commission never ranks | Commission-injection byte-identical test — algorithm-engineer, Phase 4 | Deferred (no ranking code yet) |
+| 1 | Commission never ranks | Commission-injection byte-identical test — algorithm-engineer, Phase 4 | **ENFORCED (Phase 4)** — byte-identical injection test + BFS import-closure ban; Phase 5 wires match→basket (gate P4-3), Phase 9 re-verified by boundary test |
 | 2 | No ads before critical content | Route-tree scan test — monetization-engineer, Phase 9 | Deferred (no routes yet) |
-| 3 | Viral needs ≥3 signal families | Trend-engine unit tests — algorithm-engineer, Phase 4 | Deferred (no trend code yet) |
+| 3 | Viral needs ≥3 signal families | Trend-engine unit tests — algorithm-engineer, Phase 4 | **ENFORCED (Phase 4)** — single-family → insufficient_evidence, same-family dedupe, default insufficient_evidence |
 | 4 | Provenance on every fact | Provenance FK on every user-facing table + render guard — data-architect Phase 1, frontend Phase 7 | **Schema half ENFORCED (Phase 1)** — FK-discovery test on live schema + real D1; render guard due Phase 7 |
-| 5 | Suppression beats guessing | Suppression-engine tests — algorithm-engineer, Phase 4 | Deferred |
+| 5 | Suppression beats guessing | Suppression-engine tests — algorithm-engineer, Phase 4 | **ENFORCED (Phase 4)** — all eight §1.5 triggers with reason codes; recalled offers excluded from every basket |
 | 6 | Banned claims lint | scripts/lint-banned-claims.mjs in `npm run lint` + seeded-violation test | **ENFORCED (Phase 0)** |
 | 7 | PII never persists | Upload-cycle zero-PII test — parser-engineer, Phase 3 | **ENFORCED (Phase 3)** — full-cycle seed+scan on node & real workerd (R2, D1, logs); Phase 5 must extend over its own writes (gate P3-2) |
 | 8 | No emoji iconography | scripts/lint-no-emoji.mjs in `npm run lint` + seeded-violation test | **ENFORCED (Phase 0)** |
@@ -135,7 +135,7 @@ Vitest + @cloudflare/vitest-pool-workers, Playwright, axe-core, Lighthouse CI.
 | 1 Data contracts | data-architect | **Complete** — gate passed (docs/handoffs/gates/phase-1-gate.md) |
 | 2 Ingestion | ingestion-engineer | **Complete** — gate passed (docs/handoffs/gates/phase-2-gate.md) |
 | 3 Parsing | parser-engineer | **Complete** — gate passed (docs/handoffs/gates/phase-3-gate.md) |
-| 4 Algorithms | algorithm-engineer | Not started |
+| 4 Algorithms | algorithm-engineer | **Complete** — gate passed (docs/handoffs/gates/phase-4-gate.md) |
 | 5 API | backend-api | Not started |
 | 6 Design direction | design-director | **Complete** — gate passed (docs/handoffs/gates/phase-6-gate.md) |
 | 7 Frontend | frontend-engineer | Not started |
