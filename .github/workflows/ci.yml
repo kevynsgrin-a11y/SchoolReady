@@ -4,6 +4,7 @@ on:
   push:
     branches: ["**"]
   pull_request:
+  workflow_dispatch:
 
 jobs:
   verify:
@@ -59,3 +60,40 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npx --yes @lhci/cli autorun --config=lighthouserc.json
+
+  # Production deploy (backtoacademy.com). Gated on the DEPLOY_ENABLED repo
+  # variable, same pattern as LHCI_ENABLED above — stays off until the repo
+  # owner has provisioned real Cloudflare resources and pasted their IDs
+  # into wrangler.jsonc (docs/release/backtoacademy-launch-runbook.md).
+  # Requires two repo SECRETS (Settings > Secrets and variables > Actions >
+  # Secrets): CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID. Only runs on
+  # pushes to main that already passed `verify`, so a broken build can never
+  # deploy. `wrangler deploy` re-applies D1 migrations from migrations/ as
+  # part of publish, so the production database schema stays in sync.
+  deploy:
+    # Fires on a push to main (the normal path) or a manual "Run workflow"
+    # dispatch against main (docs/release/backtoacademy-launch-runbook.md
+    # Step 5.7) — never on a pull_request, so fork PRs can't reach the
+    # secrets below.
+    if: ${{ github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && vars.DEPLOY_ENABLED == 'true' }}
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Apply D1 migrations
+        # Database name must match wrangler.jsonc "database_name" exactly.
+        run: npx wrangler d1 migrations apply k8-planner-fixture --remote
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy

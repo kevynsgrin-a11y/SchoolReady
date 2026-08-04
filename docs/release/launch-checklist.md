@@ -9,17 +9,21 @@
 
 ## 1. Brand, domain, legal entity — owner: repository owner
 
-- `config/brand.ts` still carries the disposable working name, a reserved
-  `.example` domain, and `legalEntity: "UNSET — no legal entity formed"`.
-  The release mandate forbids release in this state, and the privacy
-  policy / incident contact have no legal person behind them until it
-  clears.
-- To clear: register the domain, form (or designate) the legal entity,
-  replace the four strings in `config/brand.ts` (the ONLY file that may
-  carry them — `tests/config.test.ts` enforces isolation), and add the
-  brand-coupled assets this unblocks: favicon + manifest icons (clears the
-  only Lighthouse console error and PWA installability, Phase 7 §7) and
-  the real wordmark.
+- **PARTIALLY DISCHARGED 2026-08-04.** The repository owner purchased the
+  domain in `config/brand.ts` `domain` through Cloudflare Registrar;
+  `config/brand.ts` now carries the real working name/wordmark, domain,
+  and support email (the ONLY file that may carry them —
+  `tests/config.test.ts` enforces isolation, including against this
+  document). See the launch runbook alongside this file for the
+  Cloudflare provisioning + deploy steps this unblocks.
+- **Still open: `legalEntity: "UNSET — no legal entity formed"`.** No
+  agent may invent a legal person — this needs the repository owner's
+  actual business name (sole proprietorship under your legal name, an
+  LLC, etc.). The privacy policy / incident contact have no legal person
+  behind them until it clears. Still open: favicon + manifest icons
+  (clears the only Lighthouse console error and PWA installability,
+  Phase 7 §7) and the real wordmark/logo graphic (current wordmark is
+  text-only).
 
 ## 2. Human assistive-technology pass — owner: repository owner (schedule); accessibility-qa (checklist author)
 

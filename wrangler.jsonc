@@ -1,5 +1,10 @@
 {
   // Worker name is deliberately brand-neutral (§0 brand isolation).
+  // PRODUCTION DEPLOY (backtoacademy.com): every *_id/database_id below is
+  // still a local fixture-posture placeholder. Before setting the
+  // DEPLOY_ENABLED repo variable (.github/workflows/ci.yml), replace them
+  // with real Cloudflare resource IDs — exact click-by-click steps in
+  // docs/release/backtoacademy-launch-runbook.md.
   "name": "k8-planner",
   "main": "src/index.ts",
   "compatibility_date": "2026-07-01",
