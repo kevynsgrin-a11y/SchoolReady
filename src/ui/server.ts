@@ -553,6 +553,20 @@ export async function handleUiRequest(request: Request, deps: ApiDeps): Promise<
       case "/capsule": {
         const form = await request.formData();
         const uniform = str(form, "uniformRequired") === "on";
+        // [P12-1/P12-2 correction] Optional price/timing fields. A dollars
+        // price becomes whole cents; each block is sent only when its inputs
+        // are complete (the form hint says which inputs produce which
+        // outputs). Nothing here persists (§1.7) — the capsule endpoint is
+        // stateless.
+        const priceDollars = Number.parseFloat(str(form, "priceDollars"));
+        const priceCents =
+          Number.isFinite(priceDollars) && priceDollars > 0
+            ? Math.round(priceDollars * 100)
+            : null;
+        const seasonWearDays = int(form, "seasonWearDays");
+        const daysUntilNeeded = int(form, "daysUntilNeeded");
+        const typicalDeliveryDays = int(form, "typicalDeliveryDays");
+        const upcRaw = str(form, "upc");
         const body: CapsuleBody = {
           categories: [
             {
@@ -566,7 +580,23 @@ export async function handleUiRequest(request: Request, deps: ApiDeps): Promise<
                 : null,
             },
           ],
-          timing: null,
+          costPerWear:
+            priceCents !== null && Number.isFinite(seasonWearDays) && seasonWearDays > 0
+              ? { priceCents, seasonWearDays }
+              : null,
+          timing:
+            priceCents !== null &&
+            Number.isFinite(daysUntilNeeded) &&
+            daysUntilNeeded > 0 &&
+            Number.isFinite(typicalDeliveryDays) &&
+            typicalDeliveryDays > 0
+              ? {
+                  daysUntilNeeded,
+                  typicalDeliveryDays,
+                  currentPriceCents: priceCents,
+                  upc: /^[A-Za-z0-9-]{4,32}$/.test(upcRaw) ? upcRaw : null,
+                }
+              : null,
         };
         const response = await callApi<CapsuleData>(session, "POST", "/api/capsule", { json: body });
         return htmlResponse(renderCapsule(stateFromResponse(response.body)), session);

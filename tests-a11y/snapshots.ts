@@ -163,6 +163,8 @@ function trendData(overrides: Partial<TrendData> = {}): TrendData {
   };
 }
 
+// [P12-4] Grouped state: the checklist's store-trip headings + no-store
+// group are new markup and get axed here (heading order, list semantics).
 const checklistData: ChecklistData = {
   generatedAt: "2026-08-04T12:00:00.000Z",
   memberOrdinals: [1, 2],
@@ -180,9 +182,31 @@ const checklistData: ChecklistData = {
       grossRequiredUnits: 18,
       usableInventoryUnits: 5.5,
       perMember: [{ memberOrdinal: 1, requiredUnits: 12 }],
+      retailerSlug: "fixture-mart",
+      provenanceIds: [PROV.id],
+    },
+    {
+      key: "sticker-set|*|*|*",
+      productTypeSlug: "sticker-set",
+      displayName: "sticker sets",
+      dimensions: null,
+      rulingStyle: null,
+      color: null,
+      optionality: "optional",
+      unitsToBuy: 1,
+      netRequiredUnits: 1,
+      grossRequiredUnits: 1,
+      usableInventoryUnits: 0,
+      perMember: [{ memberOrdinal: 1, requiredUnits: 1 }],
+      retailerSlug: null,
       provenanceIds: [PROV.id],
     },
   ],
+  grouping: {
+    view: "lowest_cost",
+    retailerSlugs: ["fixture-mart"],
+    provenanceIds: [PROV.id],
+  },
 };
 
 const alertsData: AlertsData = {

@@ -126,7 +126,9 @@ describe("contracts — §1.4: fact-bearing response types carry provenanceIds (
     "RequirementSummary",
     "InventorySummary",
     "ChecklistLine",
+    "ChecklistGrouping", // [P12-4] store-grouping fact on the checklist
     "CapsuleData",
+    "CapsuleCostPerWear", // [P12-1] cost-per-wear node on capsule lines
     "TrendData",
     "RecallEntry",
     "AlertsData",
@@ -172,6 +174,7 @@ describe("contracts — §1.4: fact-bearing response types carry provenanceIds (
     InventoryBody: "request body",
     BasketBody: "request body",
     CapsuleTimingBody: "request body",
+    CapsuleCostPerWearBody: "request body", // [P12-1] price + wear-days inputs
     CapsuleBody: "request body",
     RecallCheckBody: "request body",
     AlertSubscribeBody: "request body",
@@ -322,6 +325,40 @@ describe("POST /api/capsule — ranges with visible assumptions", () => {
     const line = result.body.data.lines[0];
     expect(line.unitsRange).toEqual({ min: 2, max: 7 });
     expect(line.dressCodeNotes[0]).toContain("uniform required");
+  });
+
+  it("[P12-1] cost-per-wear rides per line: hand-computed engine range + labeled wears basis", async () => {
+    const { deps } = makeNodeDeps();
+    const result = await callApi(deps, "POST", "/api/capsule", {
+      body: { categories, costPerWear: { priceCents: 1299, seasonWearDays: 160 } },
+    });
+    expect(result.status).toBe(200);
+    const cpw = result.body.data.lines[0].costPerWear;
+    // Hand-computed: unitsRange {2,6} + 3 existing -> 5-9 pieces in rotation;
+    // wears = round(160/pieces, 2); perWearCents = round(1299/wears, 2).
+    expect(cpw.projectedWearsRange).toEqual({ min: 17.78, max: 32 });
+    expect(cpw.perWearCentsRange).toEqual({ min: 40.59, max: 73.06 });
+    expect(cpw.priceCents).toBe(1299);
+    expect(cpw.seasonWearDays).toBe(160);
+    const names = cpw.assumptions.map((a: { name: string }) => a.name);
+    expect(names).toContain("price_per_piece_cents");
+    expect(names).toContain("season_wear_days");
+    expect(names).toContain("projected_wears_per_piece_range");
+    for (const a of cpw.assumptions) {
+      expect(["user_input", "model_constant"]).toContain(a.basis);
+    }
+    expect(cpw.provenanceIds.length).toBeGreaterThan(0);
+    assertResponseProvenance(result.body.data, result.body.provenance);
+  });
+
+  it("[P12-1] no price input -> costPerWear is null, never a guessed price", async () => {
+    const { deps } = makeNodeDeps();
+    const result = await callApi(deps, "POST", "/api/capsule", { body: { categories } });
+    expect(result.body.data.lines[0].costPerWear).toBeNull();
+    const invalid = await callApi(deps, "POST", "/api/capsule", {
+      body: { categories, costPerWear: { priceCents: 0, seasonWearDays: 160 } },
+    });
+    expect(invalid.status).toBe(400);
   });
 
   it("buy-now-vs-wait uses observed fixture history and never forecasts", async () => {

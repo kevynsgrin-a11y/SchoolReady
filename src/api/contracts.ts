@@ -289,6 +289,28 @@ export interface ChecklistLine {
   grossRequiredUnits: number;
   usableInventoryUnits: number;
   perMember: readonly { memberOrdinal: number; requiredUnits: number }[];
+  /**
+   * [P12-4] Store this line lands with under the grouping basket option
+   * (§6 J1 store-grouped checklist); null = outside the basket (optional
+   * line, inventory-covered line, or no grouping computed).
+   */
+  retailerSlug: string | null;
+  provenanceIds: readonly string[];
+}
+
+/**
+ * [P12-4] Store grouping for the printable checklist, read from ONE
+ * labeled frontier view of the same Pareto basket the basket endpoint
+ * serves — a view used for grouping purposes, never presented as "the"
+ * answer (§0 capability 3). null when no basket result exists for the
+ * plan; the checklist then renders ungrouped with an honest note (§1.5).
+ */
+export interface ChecklistGrouping {
+  /** Which labeled frontier view supplied the store assignments. */
+  view: "lowest_cost";
+  /** One heading per store trip, in the option's deterministic order. */
+  retailerSlugs: readonly string[];
+  /** Offer/holiday provenance behind the store-assignment facts (§1.4). */
   provenanceIds: readonly string[];
 }
 
@@ -296,6 +318,8 @@ export interface ChecklistData {
   generatedAt: IsoTimestamp;
   memberOrdinals: number[];
   lines: ChecklistLine[];
+  /** null = no basket result; lines stay ungrouped, with the reason shown. */
+  grouping: ChecklistGrouping | null;
 }
 
 /* ------------------------------------------------------------------ */
@@ -340,13 +364,46 @@ export interface CapsuleTimingBody {
   upc?: string | null;
 }
 
+/**
+ * [P12-1 correction] User inputs for the cost-per-wear math. Both values are
+ * volunteered per request and never persisted (§1.7); the price applies to
+ * each requested category line ("if a piece in this category costs this").
+ */
+export interface CapsuleCostPerWearBody {
+  /** User-entered price per piece, in whole cents. */
+  priceCents: number;
+  /** User-entered wear days this season for the category. */
+  seasonWearDays: number;
+}
+
 export interface CapsuleBody {
   categories: CapsuleCategoryInput[];
+  costPerWear?: CapsuleCostPerWearBody | null;
   timing?: CapsuleTimingBody | null;
 }
 
+/**
+ * [P12-1 correction] Cost-per-wear per garment category — engine output
+ * verbatim (costPerWearCents / projectedWearsPerUnit, cents at 2 dp), with
+ * the wears basis shipped as labeled assumptions, never as facts.
+ */
+export interface CapsuleCostPerWear {
+  priceCents: number;
+  seasonWearDays: number;
+  /** Wears per piece: season wear days over usable existing + units to buy. */
+  projectedWearsRange: { min: number; max: number };
+  /** Engine cost-per-wear in cents (2 dp): min pairs with the most wears. */
+  perWearCentsRange: { min: number; max: number };
+  assumptions: readonly Assumption[];
+  provenanceIds: readonly string[];
+}
+
 export interface CapsuleData {
-  lines: (CapsuleCategoryLine & { provenanceIds: readonly string[] })[];
+  lines: (CapsuleCategoryLine & {
+    provenanceIds: readonly string[];
+    /** null when the request carried no cost-per-wear inputs. */
+    costPerWear: CapsuleCostPerWear | null;
+  })[];
   timing: (BuyNowVsWaitResult & { provenanceIds: readonly string[] }) | null;
 }
 

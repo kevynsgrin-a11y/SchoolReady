@@ -14,6 +14,13 @@
 
 const plural = (n: number, one: string, many: string): string => (n === 1 ? one : many);
 
+/**
+ * [P12-4] Single source for the lowest-cost frontier view's label: the
+ * checklist's store grouping cites the SAME view name the basket page
+ * shows, so the two surfaces can never drift apart.
+ */
+const VIEW_LOWEST_COST = "Lowest cost";
+
 export const COMMON = {
   skipToContent: "Skip to main content",
   fixtureNotice:
@@ -253,6 +260,14 @@ export const CHECKLIST = {
   itemToBuy: (units: number): string => `Buy ${units}`,
   offlineReady: "Saved for offline use. Losing signal in the aisle will not lose this list.",
   generatedAt: (date: string): string => `Checklist generated ${date}`,
+  /** [P12-4] Store-grouped checklist (§6 J1) — basis label and states. */
+  storeTrip: (retailer: string): string => `${retailer} trip`,
+  groupedBy: `Grouped by store using the "${VIEW_LOWEST_COST}" basket view — one of four views on the comparison page, not the only way to shop this plan.`,
+  noStoreHeading: "No store trip",
+  noStoreNote:
+    "Optional items and lines your inventory already covers stay outside the basket math, so no store is assigned to them.",
+  ungrouped:
+    "Not grouped by store: there is no basket comparison result for this plan right now, and the comparison page shows why. Items appear in list order instead.",
 } as const;
 
 export const BASKET = {
@@ -263,7 +278,7 @@ export const BASKET = {
   emptyNothingToBuy: "Nothing left to buy: your inventory already covers every required item on the plan.",
   infeasible:
     "No store combination covers every required item right now. The gaps are listed below; fix what you can or check back after prices refresh.",
-  viewLowestCost: "Lowest cost",
+  viewLowestCost: VIEW_LOWEST_COST,
   viewFewestStops: "Fewest stops",
   viewFastest: "Fastest",
   viewHighestConfidence: "Highest confidence",
@@ -313,12 +328,29 @@ export const CAPSULE = {
   usableExisting: "Usable pieces already owned",
   uniformRequired: "School requires a uniform",
   submit: "Compute the capsule range",
+  priceLegend: "Price and timing (optional)",
+  priceLegendHint:
+    "Add a price and wear days to get cost per wear. Add the days until it is needed and a delivery estimate to get a buy-now-or-wait check.",
+  price: "Price per piece, in dollars",
+  seasonWearDays: "School days this season the piece gets worn",
+  daysUntilNeeded: "Days until the clothes are needed",
+  deliveryDays: "Typical delivery time for your store, in days",
+  upc: "UPC from the product listing",
+  upcHint:
+    "With a UPC we compare the price against its observed history. Without one, no comparison is made and the check says so.",
   rangeUnits: (min: number, max: number): string =>
     min === max ? `${min} to ${min}` : `${min} to ${max}`,
   rewears: (min: number, max: number): string =>
     `assumes ${min} to ${max} wears per piece between washes`,
   dressCodeOff:
     "We cannot confirm this school's dress code from an official source, so the capsule filter is off. You can apply the district's published policy manually.",
+  costPerWearTitle: "Cost per wear",
+  costPerWearPriceRow: "Price per piece",
+  costPerWearWearsRow: "Projected wears per piece",
+  /** Formatted money strings arrive pre-computed (moneyCents at call site). */
+  costPerWearValue: (min: string, max: string): string =>
+    min === max ? `${min} per wear` : `${min} to ${max} per wear`,
+  costPerWearBasisTitle: "Wears basis",
   timingTitle: "Buy now or wait?",
   timingBuyNow: "Buy now",
   timingWait: "Waiting is reasonable",

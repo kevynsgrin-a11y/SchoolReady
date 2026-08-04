@@ -266,6 +266,8 @@ const sessionData: SessionData = {
   memberOrdinals: [1],
 };
 
+// [P12-4] Grouped state: the store-grouped rows stay inside the protected
+// required_items section, so the §1.2 scan covers the new layout too.
 const checklistData: ChecklistData = {
   generatedAt: T0_ISO,
   memberOrdinals: [1],
@@ -283,9 +285,15 @@ const checklistData: ChecklistData = {
       grossRequiredUnits: 18,
       usableInventoryUnits: 5.5,
       perMember: [{ memberOrdinal: 1, requiredUnits: 12 }],
+      retailerSlug: "fixture-mart",
       provenanceIds: [PROV.id],
     },
   ],
+  grouping: {
+    view: "lowest_cost",
+    retailerSlugs: ["fixture-mart"],
+    provenanceIds: [PROV.id],
+  },
 };
 
 const entitlementsFor = (active: boolean): EntitlementsData =>

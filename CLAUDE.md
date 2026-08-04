@@ -143,4 +143,4 @@ Vitest + @cloudflare/vitest-pool-workers, Playwright, axe-core, Lighthouse CI.
 | 9 Monetization | monetization-engineer | **Complete** — gate passed (docs/handoffs/gates/phase-9-gate.md) |
 | 10 Compliance | compliance-officer | **Complete** — gate passed (docs/handoffs/gates/phase-10-gate.md) |
 | 11 Accessibility | accessibility-qa | **Complete** — gate passed (docs/handoffs/gates/phase-11-gate.md) |
-| 12 Release | release-qa | Not started |
+| 12 Release | release-qa | **Complete** — final gate passed (docs/handoffs/gates/phase-12-gate.md); release BLOCKED on 8 human-owned launch items (docs/release/launch-checklist.md) |

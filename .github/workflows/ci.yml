@@ -17,10 +17,36 @@ jobs:
       - run: npm ci
       - run: npm run verify
 
+  # Browser suites (Phase 11 accessibility + Phase 12 release E2E). Both run
+  # the REAL app under wrangler dev in Chromium. NON-BLOCKING FOR NOW
+  # (continue-on-error): the job needs Chromium download + wrangler dev boot
+  # time and has not yet been proven stable on shared CI runners — a flaky
+  # infra failure must not mask the hermetic verify signal while it beds in.
+  # FLIP TO REQUIRED AT LAUNCH (docs/release/launch-checklist.md item 6):
+  # remove continue-on-error and add this job to branch protection. Locally
+  # both suites are green: 65/65 (a11y) + 14/14 (e2e), evidence in
+  # docs/handoffs/13-release-qa-12.md SS6.
+  browser-suites:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:a11y
+      - run: npm run test:e2e
+
   # Lighthouse budgets (lighthouserc.json) are committed from Phase 0 but the
   # job activates in Phase 7, when frontend-engineer lands a buildable app and
   # sets the LHCI_ENABLED repository variable to 'true'. Budgets: Perf >= 90,
   # A11y >= 95, Best Practices >= 95, SEO >= 95, CLS < 0.1, LCP < 2.5s (mobile).
+  # Phase 12 note: lighthouserc.json has been proven runnable (Phase 11, D6
+  # fix) and all budgets are green locally — the ONLY remaining step is the
+  # repo-admin action of setting LHCI_ENABLED=true (launch-checklist item 5).
   lighthouse:
     if: ${{ vars.LHCI_ENABLED == 'true' }}
     runs-on: ubuntu-latest

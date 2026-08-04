@@ -21,7 +21,7 @@ import { describe, expect, it } from "vitest";
 import { handleUiRequest } from "../src/ui/server";
 import { scanRenderedPage } from "../src/monetization/route-scan";
 import { FIXTURE_STRIPE_SIGNATURE, STRIPE_SIGNATURE_HEADER } from "../src/api/stripe";
-import { makeClient, householdIdOf, T0 } from "./api-helpers";
+import { contentObjectKey, makeClient, householdIdOf, ocrDocFor, T0 } from "./api-helpers";
 import type { WorkerClient } from "./api-helpers";
 
 interface UiResult {
@@ -36,7 +36,9 @@ async function ui(
   client: WorkerClient,
   method: "GET" | "POST",
   path: string,
-  options: { form?: Record<string, string>; label?: string; capture?: boolean } = {},
+  // [Release — Phase 12, P9-1] form values may be File so the upload path's
+  // rendered review page enters this sweep like paste/manual do.
+  options: { form?: Record<string, string | File>; label?: string; capture?: boolean } = {},
 ): Promise<UiResult> {
   const headers = new Headers();
   if (client.cookie) headers.set("cookie", client.cookie);
@@ -170,6 +172,26 @@ describe("§1.2 route-tree scan over the real server", () => {
     expect(safety).toBeDefined();
     expect(safety!.html).toContain("1 recall match for this UPC");
     expect(safety!.html).toContain("section-safety_warning");
+  });
+
+  it("upload path: POST /intake/upload's rendered review page enters the sweep (gate finding P9-1)", async () => {
+    // Same review screen as paste/manual, but reached through the R2 upload
+    // buffer + fixture OCR — captured so the §1.2 scan covers all three
+    // intake methods' rendered output, not two of three.
+    const bytes = new TextEncoder().encode("fixture upload for the P9-1 sweep");
+    const uploadClient = makeClient({
+      idPrefix: "up",
+      ocrDoc: ocrDocFor(await contentObjectKey(bytes), "6 glue sticks\n2 boxes of crayons"),
+    });
+    const review = await ui(uploadClient, "POST", "/intake/upload", {
+      form: { file: new File([bytes], "list.png", { type: "image/png" }) },
+      label: "POST /intake/upload review render (P9-1)",
+    });
+    expect(review.status).toBe(200);
+    expect(review.html).toContain("Confirm what we read");
+    expect(review.html).toContain('name="intakeMethod" value="upload"');
+    // The captured page rides into the final scans below with every other
+    // rendered route (zero slots, no interstitials, no dark patterns).
   });
 
   it("§1.2 paywall rule: protected surfaces are byte-identical with and without a Season Pass", async () => {

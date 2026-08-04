@@ -147,6 +147,17 @@ ${typeStepClasses()}
 .banner-recall .badge-recalled { background: #FFFFFF; color: var(--status-recall); }
 .banner-restricted { background: var(--status-restricted); color: #FFFFFF; }
 .banner-restricted .badge-restricted { background: #FFFFFF; color: var(--status-restricted); }
+/* [Release — Phase 12, finding P12-3] Recall-entry cards nest INSIDE the
+   solid recall banner on the safety intercept: the banner's white
+   foreground on the card's white surface made the recall title, hazard,
+   and remedy invisible (white-on-white). Phase 11's axe pass missed it
+   because the card's box-shadow makes axe file these nodes as
+   "incomplete", not violations. Content on the white card reverts to the
+   normal palette; banner chrome outside cards stays white-on-red. */
+.banner-recall .card, .banner-restricted .card { color: var(--color-ink); }
+.banner-recall .card a, .banner-restricted .card a { color: var(--color-action); }
+.banner-recall .card .provenance-line, .banner-restricted .card .provenance-line { color: var(--color-graphite); }
+.banner-recall .card :focus-visible, .banner-restricted .card :focus-visible { outline-color: var(--color-action); }
 .banner-correction { background: var(--color-surface); border: 2px solid var(--color-ink); }
 .banner-title { font-weight: 700; margin-bottom: var(--space-2); }
 .banner-body p:last-child { margin-bottom: 0; }
@@ -179,8 +190,8 @@ ${typeStepClasses()}
 .fact-row .list-row, .fact-row .check-row { border-bottom: none; }
 .row-ordinal { font-family: var(--font-data); font-size: var(--text-data-s-size); color: var(--color-graphite); }
 .row-name { position: relative; display: inline-block; }
-.list-row.checked { color: var(--color-graphite); }
-.list-row.checked .row-name::after { content: ""; position: absolute; left: 0; top: 50%; height: 2px; width: 100%; background: var(--color-ink); animation: strike var(--motion-check-strike) var(--motion-easing); }
+.list-row.checked, .check-row.checked { color: var(--color-graphite); }
+.list-row.checked .row-name::after, .check-row.checked .row-name::after { content: ""; position: absolute; left: 0; top: 50%; height: 2px; width: 100%; background: var(--color-ink); animation: strike var(--motion-check-strike) var(--motion-easing); }
 @keyframes strike { from { width: 0; } to { width: 100%; } }
 .row-detail { color: var(--color-graphite); font-size: var(--text-data-s-size); font-family: var(--font-data); }
 .row-badges { display: flex; flex-wrap: wrap; gap: var(--space-1); justify-content: flex-end; }
@@ -192,6 +203,12 @@ ${typeStepClasses()}
 .store-mode .check-row { padding: var(--space-3) 0; font-size: var(--text-body-l-size); }
 .store-mode .check-row .checkbox { width: 36px; height: 36px; margin: 4px; }
 .checklist-bar { position: sticky; bottom: 0; background: var(--color-surface); border-top: 1px solid var(--color-ink); padding: var(--space-3) var(--space-4); display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); font-family: var(--font-data); }
+/* [P12-4] Store-grouped checklist (§6 J1): one section per trip; headings
+   use the heading step (smaller than h2 default) so the aisle list stays
+   dense; groups never split across printed pages. */
+.checklist-store-group { break-inside: avoid; margin: var(--space-4) 0 0; }
+.checklist-store { display: flex; align-items: center; gap: var(--space-2); margin: 0 0 var(--space-1); font-size: var(--text-heading-size); line-height: var(--text-heading-line); border-bottom: 1px solid var(--color-ink); padding-bottom: var(--space-1); }
+.checklist-grouping { color: var(--color-graphite); margin: 0 0 var(--space-1); }
 
 /* Buttons and forms — hit targets >= 44px (direction §4). */
 .button { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); min-height: var(--touch-target); padding: var(--space-2) var(--space-4); border-radius: var(--radius-2); font-family: var(--font-body); font-size: var(--text-label-size); font-weight: var(--text-label-weight); letter-spacing: var(--text-label-tracking); text-decoration: none; cursor: pointer; }
@@ -253,10 +270,13 @@ legend { font-weight: 700; padding: 0 var(--space-2); }
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 
-/* Print: the checklist is the export. */
+/* Print: the checklist is the export. Store-trip groups stay intact on
+   paper ([P12-4]): headings print with their rows, never orphaned. */
 @media print {
   .site-header, .site-footer, .fixture-ribbon, .offline-banner, .checklist-bar, .button, .skip-link, script { display: none !important; }
   body { background: #FFFFFF; }
+  .checklist-store-group { break-inside: avoid; page-break-inside: avoid; }
+  .checklist-store { break-after: avoid; page-break-after: avoid; }
 }
 `;
 }

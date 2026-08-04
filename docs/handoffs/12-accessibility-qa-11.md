@@ -280,3 +280,25 @@ All in `docs/a11y/audit-phase-11.md` §4 with file:line references.
   .lighthouseci/lhr-*.json with assertion-results.json (empty array = all
   budgets green). The two live-mode Lighthouse runs are unarchived;
   release-qa re-runs the live pair during the Phase 12 congruence gate.
+
+## Errata (release-qa, Phase 12 congruence gate — finding P12-3)
+
+- The congruence gate found that recall-entry CARDS nest inside the solid
+  recall banner on the safety intercept (`src/ui/screens/safety.ts`
+  renders `recallEntry` cards in the `recallBanner` body): the Phase 11
+  banner-wide white foreground made the card's title/hazard/remedy text
+  white-on-white — invisible. This phase's axe pass missed it because the
+  card's box-shadow files those nodes as "incomplete" rather than
+  violations under axe's color-contrast rule; the zero-serious bar was
+  honest but this class of node was outside it.
+- Fix (release-qa, styles only, `[Release — Phase 12, finding P12-3]`
+  comments): content on the white card reverts to the normal
+  ink/action/graphite palette and the action-green focus ring;
+  banner chrome OUTSIDE cards keeps this phase's D2/D3 white treatment
+  unchanged.
+- One assertion in `tests-a11y/keyboard.spec.ts` (journey 2) pinned the
+  white ring on the banner's first link — that link sits ON the card, so
+  the pinned byte reproduced the defect. Updated to expect the green ring
+  plus an explicit on-card assertion. The zero-serious/critical axe bar,
+  D2's banner-level white ring, and all counts are unchanged: suite still
+  65/65 after the fix (re-run 2026-08-04).

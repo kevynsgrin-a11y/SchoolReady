@@ -10,7 +10,7 @@
  */
 import { test, expect } from "@playwright/test";
 import {
-  RING_WHITE,
+  RING_GREEN,
   expectVisibleRing,
   focusedOutline,
   gotoStable,
@@ -173,12 +173,19 @@ test.describe("journey 2 — safety intercept, keyboard only", () => {
     const animation = await banner.evaluate((el) => window.getComputedStyle(el).animationName);
     expect(animation).toBe("none");
 
-    // Links inside the banner are keyboard-reachable with a VISIBLE ring —
-    // white on Recall Red (the green ring measured 1.02:1 there; fixed
-    // Phase 11, see docs/a11y/audit-phase-11.md).
+    // Links inside the banner are keyboard-reachable with a VISIBLE ring.
+    // [Release — Phase 12, finding P12-3] The first banner link sits on the
+    // recall-entry CARD — a white surface nested inside the red banner —
+    // where Phase 11's banner-wide white ring (and white text) was
+    // invisible white-on-white. Card content now reverts to the normal
+    // palette, so the correct visible ring HERE is the action green; banner
+    // chrome outside cards keeps the Phase 11 white ring (D2). Erratum
+    // appended to docs/handoffs/12-accessibility-qa-11.md.
     const bannerLink = banner.locator("a").first();
     await bannerLink.focus();
-    await expectVisibleRing(page, RING_WHITE);
+    await expectVisibleRing(page, RING_GREEN);
+    const onCard = await bannerLink.evaluate((el) => el.closest(".card") !== null);
+    expect(onCard, "first banner link sits on the white recall-entry card").toBe(true);
   });
 });
 

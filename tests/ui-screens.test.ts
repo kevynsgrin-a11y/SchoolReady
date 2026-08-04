@@ -8,13 +8,14 @@
 import { describe, expect, it } from "vitest";
 import type { NetRequiredLine } from "../src/algorithms/net-required";
 import type { BasketOption, BasketParetoResult } from "../src/algorithms/basket";
-import type { BasketData, ChecklistData, MergeData, TrendData } from "../src/api/contracts";
+import type { BasketData, CapsuleData, ChecklistData, MergeData, TrendData } from "../src/api/contracts";
 import { renderDocument } from "../src/ui/components/chrome";
 import type { Screen } from "../src/ui/components/chrome";
 import { renderHome } from "../src/ui/screens/home";
 import { renderPlan } from "../src/ui/screens/plan";
 import { renderChecklist } from "../src/ui/screens/checklist";
 import { renderBasket } from "../src/ui/screens/basket";
+import { renderCapsule } from "../src/ui/screens/capsule";
 import { renderTrends, MIN_ORGANIC_FAMILIES_FOR_TREND } from "../src/ui/screens/trends";
 import { renderMethodology } from "../src/ui/screens/methodology";
 import { renderStatus } from "../src/ui/screens/status";
@@ -319,26 +320,62 @@ describe("plan — merged shopping list states", () => {
 /* ------------------------------------------------------------------ */
 
 describe("checklist — in-store mode", () => {
+  function checklistLine(
+    overrides: Partial<ChecklistData["lines"][number]> = {},
+  ): ChecklistData["lines"][number] {
+    return {
+      key: "glue-stick|*|*|*",
+      productTypeSlug: "glue-stick",
+      displayName: "glue sticks",
+      dimensions: null,
+      rulingStyle: null,
+      color: null,
+      optionality: "required",
+      unitsToBuy: 13,
+      netRequiredUnits: 12.5,
+      grossRequiredUnits: 18,
+      usableInventoryUnits: 5.5,
+      perMember: [{ memberOrdinal: 1, requiredUnits: 12 }],
+      retailerSlug: null,
+      provenanceIds: [PROV.id],
+      ...overrides,
+    };
+  }
+
   const checklist: ChecklistData = {
     generatedAt: "2026-08-04T12:00:00.000Z",
     memberOrdinals: [1, 2],
+    lines: [checklistLine()],
+    grouping: null,
+  };
+
+  // [P12-4] Store-grouped variant: two required lines assigned to two trips
+  // by the lowest-cost frontier view, one optional line outside the basket.
+  const groupedChecklist: ChecklistData = {
+    ...checklist,
     lines: [
-      {
-        key: "glue-stick|*|*|*",
-        productTypeSlug: "glue-stick",
-        displayName: "glue sticks",
-        dimensions: null,
-        rulingStyle: null,
-        color: null,
-        optionality: "required",
-        unitsToBuy: 13,
-        netRequiredUnits: 12.5,
-        grossRequiredUnits: 18,
-        usableInventoryUnits: 5.5,
-        perMember: [{ memberOrdinal: 1, requiredUnits: 12 }],
-        provenanceIds: [PROV.id],
-      },
+      checklistLine({ retailerSlug: "fixture-mart" }),
+      checklistLine({
+        key: "marker|*|*|*",
+        productTypeSlug: "marker",
+        displayName: "washable markers",
+        unitsToBuy: 2,
+        retailerSlug: "fixture-depot",
+      }),
+      checklistLine({
+        key: "sticker-set|*|*|*",
+        productTypeSlug: "sticker-set",
+        displayName: "sticker sets",
+        optionality: "optional",
+        unitsToBuy: 1,
+        retailerSlug: null,
+      }),
     ],
+    grouping: {
+      view: "lowest_cost",
+      retailerSlugs: ["fixture-depot", "fixture-mart"],
+      provenanceIds: [PROV.id],
+    },
   };
 
   it("ready: large native check targets keyed by opaque line keys", () => {
@@ -366,6 +403,181 @@ describe("checklist — in-store mode", () => {
       ),
     );
     expect(page).toContain("no plan exists yet");
+  });
+
+  it("[P12-4] grouped: store-trip headings in visit order, basis label cites the lowest-cost view WITH provenance", () => {
+    const page = doc(
+      renderChecklist(
+        { kind: "ready", envelope: envelope(groupedChecklist, provs) },
+        { storeMode: false },
+      ),
+    );
+    const depotAt = page.indexOf("fixture-depot trip");
+    const martAt = page.indexOf("fixture-mart trip");
+    expect(depotAt).toBeGreaterThan(-1);
+    expect(martAt).toBeGreaterThan(-1);
+    expect(depotAt).toBeLessThan(martAt); // the grouping option's visit order
+    // Each line sits inside its trip's section (keyed rows, lexicon names).
+    expect(page.slice(martAt, page.indexOf("</section>", martAt))).toContain(
+      'data-line-key="glue-stick|*|*|*"',
+    );
+    expect(page.slice(depotAt, page.indexOf("</section>", depotAt))).toContain(
+      'data-line-key="marker|*|*|*"',
+    );
+    // Basis label: the frontier view's established label, never a single answer.
+    expect(page).toContain(escapeHtml('Grouped by store using the "Lowest cost" basket view'));
+    expect(SINGLE_ANSWER_WORDS.test(page)).toBe(false);
+    expect(page).not.toMatch(/\bbest\b/i);
+    // The grouping fact renders with a visible §1.4 provenance line.
+    expect(page).toContain("provenance-line");
+  });
+
+  it("[P12-4] grouped: lines outside the basket sit under an honest no-store group", () => {
+    const page = doc(
+      renderChecklist(
+        { kind: "ready", envelope: envelope(groupedChecklist, provs) },
+        { storeMode: false },
+      ),
+    );
+    const noStoreAt = page.indexOf("No store trip");
+    expect(noStoreAt).toBeGreaterThan(-1);
+    expect(page).toContain("stay outside the basket math");
+    expect(page.slice(noStoreAt)).toContain('data-line-key="sticker-set|*|*|*"');
+  });
+
+  it("[P12-4] grouping with unresolvable provenance renders the refusal and falls back to the flat list", () => {
+    const bad: ChecklistData = {
+      ...groupedChecklist,
+      grouping: { ...groupedChecklist.grouping!, provenanceIds: ["prov:gone"] },
+    };
+    const page = doc(
+      renderChecklist({ kind: "ready", envelope: envelope(bad, provs) }, { storeMode: false }),
+    );
+    expect(page).toContain(SUPPRESSION.unresolvedProvenance);
+    expect(page).not.toContain("trip"); // no store heading may render on a refused grouping
+    expect(page).toContain("Buy 13"); // the required rows themselves still render
+  });
+
+  it("[P12-4] no basket result: the ungrouped state says so honestly, with no store headings", () => {
+    const page = doc(
+      renderChecklist({ kind: "ready", envelope: envelope(checklist, provs) }, { storeMode: false }),
+    );
+    expect(page).toContain("Not grouped by store");
+    expect(page).toContain("the comparison page shows why");
+    expect(page).not.toContain("checklist-store-group");
+  });
+});
+
+/* ------------------------------------------------------------------ */
+/* Capsule (P12-1/P12-2 correction: cost-per-wear + buy-now-vs-wait)   */
+/* ------------------------------------------------------------------ */
+
+describe("capsule — cost-per-wear and buy-now-vs-wait surfaced (§6 journey 3)", () => {
+  // Hand-computed to engine semantics: tops/temperate, wash 2 + reserve 1 +
+  // uniform 1 -> 4 days to cover; rewears 1-2; minus 3 existing -> {0, 1};
+  // pieces in rotation 3-4; 120 wear days -> wears {30, 40}; price 199c ->
+  // perWearCents {round(199/40,2)=4.97, round(199/30,2)=6.63} (node-checked).
+  function capsuleData(overrides: Partial<CapsuleData["lines"][number]> = {}): CapsuleData {
+    return {
+      lines: [
+        {
+          category: "tops",
+          climateBand: "temperate",
+          unitsRange: { min: 0, max: 1 },
+          rewearsAssumed: { min: 1, max: 2 },
+          effectiveReserveDays: 2,
+          assumptions: [
+            { name: "days_between_washes", value: "2", basis: "user_input" },
+            { name: "reserve_days", value: "2", basis: "model_constant" },
+            {
+              name: "rewears_per_unit_range",
+              value: "1-2 (tops, temperate climate band)",
+              basis: "model_constant",
+            },
+            { name: "usable_existing_units", value: "3", basis: "user_input" },
+          ],
+          dressCodeNotes: [
+            "uniform required: +1 reserve day because uniform garments have no substitutes",
+          ],
+          provenanceIds: [PROV.id],
+          costPerWear: {
+            priceCents: 199,
+            seasonWearDays: 120,
+            projectedWearsRange: { min: 30, max: 40 },
+            perWearCentsRange: { min: 4.97, max: 6.63 },
+            assumptions: [
+              { name: "price_per_piece_cents", value: "199", basis: "user_input" },
+              { name: "season_wear_days", value: "120", basis: "user_input" },
+              {
+                name: "projected_wears_per_piece_range",
+                value: "30-40 (120 wear days over 3-4 pieces in rotation)",
+                basis: "model_constant",
+              },
+            ],
+            provenanceIds: [PROV.id],
+          },
+          ...overrides,
+        },
+      ],
+      timing: {
+        timing: "buy_now",
+        reason: "current price is at or below the observed rolling median",
+        disclaimer: "comparison against observed price history only; no price prediction is made",
+        provenanceIds: [PROV.id],
+      },
+    };
+  }
+
+  it("the form collects the optional price/timing inputs (P12-2: no more timing: null)", () => {
+    const page = doc(renderCapsule({ kind: "form" }));
+    for (const name of ["priceDollars", "seasonWearDays", "daysUntilNeeded", "typicalDeliveryDays", "upc"]) {
+      expect(page).toContain(`name="${name}"`);
+    }
+    expect(page).toContain("Price and timing (optional)");
+    expect(page).toContain("cost per wear");
+  });
+
+  it("cost-per-wear renders as a Sum Rule money fact with the wears basis visible (P12-1)", () => {
+    const page = doc(renderCapsule({ kind: "ready", envelope: envelope(capsuleData(), provs) }));
+    expect(page).toContain("capsule-cost-per-wear");
+    expect(page).toContain("sum-rule");
+    expect(page).toContain("$0.05 to $0.07 per wear"); // whole-cent display of 4.97/6.63c
+    expect(page).toContain("$1.99"); // price operand row, mono ledger
+    expect(page).toContain("30 to 40"); // projected wears operand row
+    expect(page).toContain("Wears basis");
+    expect(page).toContain("30-40 (120 wear days over 3-4 pieces in rotation)");
+    expect(page).toContain("[model constant]");
+    expect(page).toContain("provenance-line");
+  });
+
+  it("buy-now-vs-wait renders its verdict, reasoning, and no-forecast disclaimer in a deadline section", () => {
+    const page = doc(renderCapsule({ kind: "ready", envelope: envelope(capsuleData(), provs) }));
+    expect(page).toContain("Buy now or wait?");
+    expect(page).toContain("Buy now");
+    expect(page).toContain("current price is at or below the observed rolling median");
+    expect(page).toContain("no price prediction is made");
+    expect(page).toContain("section-deadline");
+  });
+
+  it("no price input: the range still renders and no money fact is invented", () => {
+    const data: CapsuleData = { ...capsuleData({ costPerWear: null }), timing: null };
+    const page = doc(renderCapsule({ kind: "ready", envelope: envelope(data, provs) }));
+    expect(page).toContain("0 to 1");
+    // The re-rendered form's hint mentions cost per wear; the LEDGER must not exist.
+    expect(page).not.toContain("capsule-cost-per-wear");
+    expect(page).not.toContain("Cost per wear");
+    expect(page).not.toContain("Buy now or wait?");
+  });
+
+  it("a cost-per-wear fact with unresolvable provenance renders the refusal, never the money", () => {
+    const line = capsuleData().lines[0]!;
+    const data: CapsuleData = {
+      ...capsuleData(),
+      lines: [{ ...line, costPerWear: { ...line.costPerWear!, provenanceIds: ["prov:gone"] } }],
+    };
+    const page = doc(renderCapsule({ kind: "ready", envelope: envelope(data, provs) }));
+    expect(page).toContain(SUPPRESSION.unresolvedProvenance);
+    expect(page).not.toContain("$0.05");
   });
 });
 

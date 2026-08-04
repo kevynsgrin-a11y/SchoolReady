@@ -13,6 +13,7 @@ import { html, joinHtml } from "../html";
 import { icon } from "../icons";
 import type { Screen } from "../components/chrome";
 import { button, checkbox, field, form, select, textInput } from "../components/forms";
+import { moneyCents, sumRuleTotal } from "../components/ledger";
 import { assumptionsList } from "../components/status";
 import { renderFact, suppressionNotice } from "../render-guard";
 import type { ScreenState } from "../state";
@@ -77,8 +78,75 @@ function capsuleForm(): Html {
         }),
         checkbox({ id: "cap-uniform", name: "uniformRequired", label: CAPSULE.uniformRequired, value: "on" }),
       ])}</fieldset>`,
+      // [P12-1/P12-2 correction] Optional price + timing inputs: with a price
+      // and wear days the engine returns cost per wear; with the deadline and
+      // delivery fields it returns the buy-now-vs-wait check. All optional,
+      // all volunteered per request, never persisted (§1.7).
+      html`<fieldset><legend>${CAPSULE.priceLegend}</legend><p class="field-hint">${CAPSULE.priceLegendHint}</p>${joinHtml([
+        field({
+          id: "cap-price",
+          label: CAPSULE.price,
+          control: textInput({ id: "cap-price", name: "priceDollars", type: "number", min: 0.01, max: 10000, step: "0.01", inputmode: "decimal" }),
+        }),
+        field({
+          id: "cap-wear-days",
+          label: CAPSULE.seasonWearDays,
+          control: textInput({ id: "cap-wear-days", name: "seasonWearDays", type: "number", min: 1, max: 366, inputmode: "numeric" }),
+        }),
+        field({
+          id: "cap-needed",
+          label: CAPSULE.daysUntilNeeded,
+          control: textInput({ id: "cap-needed", name: "daysUntilNeeded", type: "number", min: 1, max: 365, inputmode: "numeric" }),
+        }),
+        field({
+          id: "cap-delivery",
+          label: CAPSULE.deliveryDays,
+          control: textInput({ id: "cap-delivery", name: "typicalDeliveryDays", type: "number", min: 1, max: 90, inputmode: "numeric" }),
+        }),
+        field({
+          id: "cap-upc",
+          label: CAPSULE.upc,
+          hint: CAPSULE.upcHint,
+          control: textInput({ id: "cap-upc", name: "upc", type: "text", pattern: "[A-Za-z0-9-]{4,32}", hinted: true }),
+        }),
+      ])}</fieldset>`,
       button({ label: CAPSULE.submit, icon: "shirt" }),
     ],
+  });
+}
+
+/**
+ * [P12-1 correction] Cost per wear as a computed money fact: Sum Rule ledger
+ * (direction §5 — operands above, single rule, result beneath) with the
+ * wears basis rendered as labeled assumptions. Guard-checked through
+ * renderFact; the enclosing category card renders the shared §1.4
+ * provenance line (render-guard withLine contract).
+ */
+function costPerWearBlock(
+  cpw: NonNullable<CapsuleData["lines"][number]["costPerWear"]>,
+  provenance: Parameters<typeof renderFact>[0]["provenance"],
+): Html {
+  return renderFact({
+    provenanceIds: cpw.provenanceIds,
+    provenance,
+    withLine: false,
+    render: () => {
+      // Whole-cent money display of the engine's 2 dp cents values; the
+      // exact wears basis renders in the assumptions list below.
+      const min = moneyCents(Math.round(cpw.perWearCentsRange.min));
+      const max = moneyCents(Math.round(cpw.perWearCentsRange.max));
+      return html`<div class="capsule-cost-per-wear">${sumRuleTotal({
+        label: CAPSULE.costPerWearTitle,
+        value: CAPSULE.costPerWearValue(min, max),
+        rows: [
+          { label: CAPSULE.costPerWearPriceRow, value: moneyCents(cpw.priceCents) },
+          {
+            label: CAPSULE.costPerWearWearsRow,
+            value: `${cpw.projectedWearsRange.min} to ${cpw.projectedWearsRange.max}`,
+          },
+        ],
+      })}${assumptionsList(CAPSULE.costPerWearBasisTitle, cpw.assumptions)}</div>`;
+    },
   });
 }
 
@@ -97,7 +165,9 @@ function capsuleLine(
         line.dressCodeNotes.length > 0
           ? html`<ul>${joinHtml(line.dressCodeNotes.map((n) => html`<li class="text-data-s">${n}</li>`))}</ul>`
           : suppressionNotice(CAPSULE.dressCodeOff)
-      }${assumptionsList(CAPSULE.formLegend, line.assumptions)}</div>`,
+      }${assumptionsList(CAPSULE.formLegend, line.assumptions)}${
+        line.costPerWear ? costPerWearBlock(line.costPerWear, provenance) : null
+      }</div>`,
   });
 }
 

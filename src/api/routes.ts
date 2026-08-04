@@ -11,6 +11,8 @@ import {
   CLIMATE_BANDS,
   computeCapsuleCategory,
   buyNowVsWait,
+  costPerWearCents,
+  projectedWearsPerUnit,
 } from "../algorithms/capsule";
 import type { CapsuleCategoryInput } from "../algorithms/capsule";
 import { evaluateFamily, classifyTrend, median, SIGNAL_FAMILIES } from "../algorithms/trend";
@@ -22,7 +24,7 @@ import {
   evaluateTrendClaim,
 } from "../algorithms/suppression";
 import type { RecallProductRef } from "../algorithms/suppression";
-import { optimizeBasket } from "../algorithms/basket";
+import { optimizeBasket, BasketSearchSpaceError } from "../algorithms/basket";
 import type { TaxHolidayWindowInput } from "../algorithms/basket";
 import { GRADE_LEVELS } from "../contracts/school";
 import type { GradeLevel } from "../contracts/school";
@@ -48,6 +50,8 @@ import type {
   AlertSubscribeBody,
   BasketBody,
   CapsuleBody,
+  CapsuleCostPerWear,
+  ChecklistGrouping,
   ConfirmListBody,
   ConfirmedRequirementInput,
   InventoryBody,
@@ -58,6 +62,7 @@ import type {
   RecallCheckBody,
   RecallEntry,
   RequirementSummary,
+  SourceStatus,
   SuppressionNote,
 } from "./contracts";
 import { ALERT_KINDS, CORE_ACCESS_NOTICE } from "./contracts";
@@ -151,6 +156,66 @@ const mergeFindingNotes = (merge: MergeComputation): SuppressionNote[] =>
   merge.listFindings
     .filter((f) => f.decision.action !== "render")
     .map((f) => ({ subject: `list:${f.listId}`, decision: f.decision }));
+
+/**
+ * [P12-4] The Pareto basket computation shared by the basket endpoint and
+ * the checklist's store grouping — ONE code path, so the checklist can
+ * never disagree with the comparison page. The pipeline order (offers ->
+ * recalls -> holidays -> derive -> optimize) is exactly what the P4-3
+ * byte-identity test recomputes; extracting it changes no behavior.
+ */
+async function computeSessionBasket(
+  deps: ApiDeps,
+  merge: MergeComputation,
+  opts: { state: string | null; daysUntilNeeded: number | null },
+) {
+  const pipelines = createSourcePipelines(deps);
+  const offersEnv = await serveSource(pipelines.offers);
+  const recallsEnv = await serveSource(pipelines.recalls);
+  const holidaysEnv = await serveSource(pipelines.taxHolidays);
+
+  const derivation = deriveCandidates(
+    offersEnv.records,
+    deps.fixtures.catalog,
+    deps.fixtures.logistics,
+    deps.clock,
+  );
+  const recallRefs: RecallProductRef[] = recallsEnv.records.flatMap((r) =>
+    r.record.products.map((p) => ({ recallId: p.recallId, upc: p.upc })),
+  );
+  const holidays: TaxHolidayWindowInput[] = holidaysEnv.records.map((r) => ({
+    state: r.record.holiday.state,
+    startsOn: r.record.holiday.startsOn,
+    endsOn: r.record.holiday.endsOn,
+    categories: r.record.categories.map((c) => ({
+      category: c.category,
+      priceCapCents: c.priceCapCents,
+    })),
+    // Fixture calendars are NEVER verified — the caveat survives to render.
+    verified: false,
+    provenanceId: r.provenance.id,
+  }));
+  const tax = lookupSalesTax(opts.state, deps.fixtures.taxRates, deps.clock);
+  const purchaseDate = isoFromMs(deps.clock()).slice(0, 10);
+
+  const inputs = deriveBasketInputs({
+    merge,
+    candidatesBySlug: derivation.bySlug,
+    recallRefs,
+    holidays,
+    state: opts.state,
+    salesTaxRate: tax.rate,
+    salesTaxBasis: tax.assumption,
+    purchaseDate,
+    daysUntilNeeded: opts.daysUntilNeeded,
+    nowMs: deps.clock(),
+  });
+
+  const basket =
+    inputs.items.length === 0 ? null : optimizeBasket(inputs.items, inputs.offers, inputs.ctx);
+
+  return { basket, inputs, derivation, offersEnv, recallsEnv, holidaysEnv, tax, purchaseDate };
+}
 
 /* ------------------------------------------------------------------ */
 /* Handlers                                                            */
@@ -430,10 +495,61 @@ async function handleMerge(ctx: RouteContext): Promise<RouteResult> {
 
 async function handleChecklist(ctx: RouteContext): Promise<RouteResult> {
   if (ctx.session === null) {
-    return { data: { generatedAt: isoFromMs(ctx.deps.clock()), memberOrdinals: [], lines: [] } };
+    return {
+      data: { generatedAt: isoFromMs(ctx.deps.clock()), memberOrdinals: [], lines: [], grouping: null },
+    };
   }
   const merge = await loadMergeComputation(ctx.deps, ctx.session.householdId);
   const memberOrdinals = await store.listMemberOrdinals(ctx.deps.db, ctx.session.householdId);
+
+  // [P12-4] §6 J1 printable STORE-GROUPED checklist: store assignments come
+  // from the lowest-cost frontier view of the SAME Pareto computation the
+  // basket endpoint serves — a labeled view used for grouping, never "the"
+  // answer. When no basket result exists (nothing to buy, infeasible, or an
+  // over-cap search space) lines stay ungrouped and the screen says so
+  // honestly (§1.5) instead of guessing store assignments.
+  let grouping: ChecklistGrouping | null = null;
+  const retailerByLineKey = new Map<string, string>();
+  const groupingProvenance: Record<string, ProvenanceRecord> = {};
+  let groupingSources: SourceStatus[] = [];
+  if (merge.lines.some((l) => l.optionality === "required" && l.unitsToBuy > 0)) {
+    try {
+      const computed = await computeSessionBasket(ctx.deps, merge, {
+        state: await store.getHouseholdState(ctx.deps.db, ctx.session.householdId),
+        daysUntilNeeded: null,
+      });
+      const option = computed.basket?.feasible ? computed.basket.views.lowestCost : null;
+      if (option !== null) {
+        const pool: Record<string, ProvenanceRecord> = {
+          ...computed.derivation.provenance,
+          ...envelopeProvenance(computed.holidaysEnv),
+        };
+        // §1.4/§1.5: the grouping ships only if EVERY cited record resolves;
+        // an unresolvable citation suppresses the grouping, never the list.
+        if (option.provenanceIds.every((id) => pool[id] !== undefined)) {
+          for (const optionLine of option.lines) {
+            retailerByLineKey.set(optionLine.itemKey, optionLine.retailerSlug);
+          }
+          for (const id of option.provenanceIds) groupingProvenance[id] = pool[id]!;
+          grouping = {
+            view: "lowest_cost",
+            retailerSlugs: option.retailerSlugs,
+            provenanceIds: option.provenanceIds,
+          };
+          // Offer/holiday freshness stays visible where the grouping renders.
+          groupingSources = [
+            sourceStatus(computed.offersEnv),
+            sourceStatus(computed.recallsEnv),
+            sourceStatus(computed.holidaysEnv),
+          ];
+        }
+      }
+    } catch (error) {
+      // An oversized plan keeps a working (ungrouped) checklist.
+      if (!(error instanceof BasketSearchSpaceError)) throw error;
+    }
+  }
+
   const lines = merge.lines.map((line) => ({
     key: line.key,
     productTypeSlug: line.productTypeSlug,
@@ -447,13 +563,18 @@ async function handleChecklist(ctx: RouteContext): Promise<RouteResult> {
     grossRequiredUnits: line.grossRequiredUnits,
     usableInventoryUnits: line.usableInventoryUnits,
     perMember: line.perMember,
+    retailerSlug: retailerByLineKey.get(line.key) ?? null,
     provenanceIds: line.provenanceIds,
   }));
-  const provenance = await store.getProvenanceRecords(ctx.deps.db, merge.provenanceIds);
+  const provenance = {
+    ...(await store.getProvenanceRecords(ctx.deps.db, merge.provenanceIds)),
+    ...groupingProvenance,
+  };
   return {
-    data: { generatedAt: isoFromMs(ctx.deps.clock()), memberOrdinals, lines },
+    data: { generatedAt: isoFromMs(ctx.deps.clock()), memberOrdinals, lines, grouping },
     provenance,
     suppressions: mergeFindingNotes(merge),
+    sources: groupingSources,
   };
 }
 
@@ -489,49 +610,9 @@ async function handleBasket(ctx: RouteContext): Promise<RouteResult> {
   const state =
     requestedState ?? (await store.getHouseholdState(deps.db, ctx.session.householdId));
 
-  const pipelines = createSourcePipelines(deps);
-  const offersEnv = await serveSource(pipelines.offers);
-  const recallsEnv = await serveSource(pipelines.recalls);
-  const holidaysEnv = await serveSource(pipelines.taxHolidays);
-
-  const derivation = deriveCandidates(
-    offersEnv.records,
-    deps.fixtures.catalog,
-    deps.fixtures.logistics,
-    deps.clock,
-  );
-  const recallRefs: RecallProductRef[] = recallsEnv.records.flatMap((r) =>
-    r.record.products.map((p) => ({ recallId: p.recallId, upc: p.upc })),
-  );
-  const holidays: TaxHolidayWindowInput[] = holidaysEnv.records.map((r) => ({
-    state: r.record.holiday.state,
-    startsOn: r.record.holiday.startsOn,
-    endsOn: r.record.holiday.endsOn,
-    categories: r.record.categories.map((c) => ({
-      category: c.category,
-      priceCapCents: c.priceCapCents,
-    })),
-    // Fixture calendars are NEVER verified — the caveat survives to render.
-    verified: false,
-    provenanceId: r.provenance.id,
-  }));
-  const tax = lookupSalesTax(state, deps.fixtures.taxRates, deps.clock);
-  const purchaseDate = isoFromMs(deps.clock()).slice(0, 10);
-
-  const inputs = deriveBasketInputs({
-    merge,
-    candidatesBySlug: derivation.bySlug,
-    recallRefs,
-    holidays,
-    state,
-    salesTaxRate: tax.rate,
-    salesTaxBasis: tax.assumption,
-    purchaseDate,
-    daysUntilNeeded,
-    nowMs: deps.clock(),
-  });
-
-  const basket = inputs.items.length === 0 ? null : optimizeBasket(inputs.items, inputs.offers, inputs.ctx);
+  // [P12-4] Shared with the checklist's store grouping — one code path.
+  const { basket, inputs, derivation, offersEnv, recallsEnv, holidaysEnv, tax, purchaseDate } =
+    await computeSessionBasket(deps, merge, { state, daysUntilNeeded });
 
   const suppressions = [...mergeFindingNotes(merge), ...inputs.suppressions];
   for (const unresolved of derivation.unresolvedOffers) {
@@ -614,12 +695,63 @@ async function handleCapsule(ctx: RouteContext): Promise<RouteResult> {
   );
   const provenance: Record<string, ProvenanceRecord> = { [provId]: capsuleProv };
 
+  // [P12-1 correction] Optional cost-per-wear inputs (user-entered price +
+  // season wear days). Validated up front; computed per category line below.
+  let cpwInput: { priceCents: number; seasonWearDays: number } | null = null;
+  if (body.costPerWear) {
+    const c = body.costPerWear;
+    if (!isPositiveInt(c.priceCents) || !isPositiveInt(c.seasonWearDays)) {
+      throw invalidRequest("costPerWear fields must be positive integers");
+    }
+    cpwInput = { priceCents: c.priceCents, seasonWearDays: c.seasonWearDays };
+  }
+
   let lines;
   try {
-    lines = body.categories.map((cat: CapsuleCategoryInput) => ({
-      ...computeCapsuleCategory(cat),
-      provenanceIds: [provId],
-    }));
+    lines = body.categories.map((cat: CapsuleCategoryInput) => {
+      const line = computeCapsuleCategory(cat);
+      let costPerWear: CapsuleCostPerWear | null = null;
+      if (cpwInput) {
+        // Wears basis: season wear days spread over the pieces in rotation
+        // (usable existing + units to buy). The range bounds pair inversely:
+        // fewer pieces -> more wears each -> lower cost per wear.
+        const piecesMin = cat.usableExisting + line.unitsRange.min;
+        const piecesMax = cat.usableExisting + line.unitsRange.max;
+        const wearsMax = projectedWearsPerUnit(cpwInput.seasonWearDays, piecesMin);
+        const wearsMin = projectedWearsPerUnit(cpwInput.seasonWearDays, piecesMax);
+        costPerWear = {
+          priceCents: cpwInput.priceCents,
+          seasonWearDays: cpwInput.seasonWearDays,
+          projectedWearsRange: { min: wearsMin, max: wearsMax },
+          perWearCentsRange: {
+            min: costPerWearCents(cpwInput.priceCents, wearsMax),
+            max: costPerWearCents(cpwInput.priceCents, wearsMin),
+          },
+          assumptions: [
+            {
+              name: "price_per_piece_cents",
+              value: String(cpwInput.priceCents),
+              basis: "user_input",
+            },
+            {
+              name: "season_wear_days",
+              value: String(cpwInput.seasonWearDays),
+              basis: "user_input",
+            },
+            {
+              // Derived through the rewears-per-unit model constants that
+              // shape unitsRange, so it carries the model_constant basis
+              // (same convention as reserve_days above).
+              name: "projected_wears_per_piece_range",
+              value: `${wearsMin}-${wearsMax} (${cpwInput.seasonWearDays} wear days over ${piecesMin}-${piecesMax} pieces in rotation)`,
+              basis: "model_constant",
+            },
+          ],
+          provenanceIds: [provId],
+        };
+      }
+      return { ...line, provenanceIds: [provId], costPerWear };
+    });
   } catch (err) {
     if (err instanceof RangeError) throw validationFailed(err.message);
     throw err;
@@ -660,7 +792,10 @@ async function handleCapsule(ctx: RouteContext): Promise<RouteResult> {
   return {
     data: { lines, timing },
     provenance,
-    assumptions: lines.flatMap((l) => [...l.assumptions]),
+    assumptions: lines.flatMap((l) => [
+      ...l.assumptions,
+      ...(l.costPerWear?.assumptions ?? []),
+    ]),
   };
 }
 
@@ -998,7 +1133,9 @@ async function handleSessionDelete(ctx: RouteContext): Promise<RouteResult> {
   const rowsDeleted = await store.purgeHousehold(deps.db, ctx.session.householdId);
   for (const { token_hash } of hashes) {
     for (const rule of Object.values(RATE_LIMIT_RULES)) {
-      await deps.kv.delete?.(`${KV_RATE_LIMIT_PREFIX}${rule.bucket}:${token_hash}`);
+      // [Release — Phase 12, P10-3] KvLike.delete is now required, so this
+      // call can no longer be silently skipped by a double lacking it.
+      await deps.kv.delete(`${KV_RATE_LIMIT_PREFIX}${rule.bucket}:${token_hash}`);
     }
   }
   deps.logger.log("session_purged", { rowsDeleted });
