@@ -1,0 +1,12 @@
+{
+  // Workers-runtime test environment (tests-workers/): workerd globals plus
+  // the "cloudflare:test" ambient module from vitest-pool-workers.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": [
+      "@cloudflare/workers-types",
+      "@cloudflare/vitest-pool-workers/types"
+    ]
+  },
+  "include": ["tests-workers/**/*.ts"]
+}
