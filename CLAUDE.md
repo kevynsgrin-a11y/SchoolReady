@@ -94,7 +94,7 @@ exist for one, an agent must say so explicitly in its handoff.
 | # | Invariant | Enforcement | Status |
 |---|-----------|-------------|--------|
 | 1 | Commission never ranks | Commission-injection byte-identical test — algorithm-engineer, Phase 4 | **ENFORCED (Phase 4)** — byte-identical injection test + BFS import-closure ban; Phase 5 wires match→basket (gate P4-3), Phase 9 re-verified by boundary test |
-| 2 | No ads before critical content | Route-tree scan test — monetization-engineer, Phase 9 | **Layout half ENFORCED (Phase 7)** — slot registry with seven protected kinds + render-time SlotPlacementError + safety-first assertion; Phase 9 adds the route-tree scan |
+| 2 | No ads before critical content | Route-tree scan test — monetization-engineer, Phase 9 | **FULLY ENFORCED (Phases 7+9)** — slot registry + render-time errors (P7) and rendered-byte route scan across every route/state with per-rule counterexamples (P9); zero slots mounted |
 | 3 | Viral needs ≥3 signal families | Trend-engine unit tests — algorithm-engineer, Phase 4 | **ENFORCED (Phase 4)** — single-family → insufficient_evidence, same-family dedupe, default insufficient_evidence |
 | 4 | Provenance on every fact | Provenance FK on every user-facing table + render guard — data-architect Phase 1, frontend Phase 7 | **FULLY ENFORCED (Phases 1+5+7)** — FK-discovery on live schema, API provenance gate + contract classification, UI render guard (renderFact is the only path to fact markup; refusal renders the suppression reason) |
 | 5 | Suppression beats guessing | Suppression-engine tests — algorithm-engineer, Phase 4 | **ENFORCED (Phase 4)** — all eight §1.5 triggers with reason codes; recalled offers excluded from every basket |
@@ -140,7 +140,7 @@ Vitest + @cloudflare/vitest-pool-workers, Playwright, axe-core, Lighthouse CI.
 | 6 Design direction | design-director | **Complete** — gate passed (docs/handoffs/gates/phase-6-gate.md) |
 | 7 Frontend | frontend-engineer | **Complete** — gate passed (docs/handoffs/gates/phase-7-gate.md) |
 | 8 SEO | seo-architect | **Complete** — gate passed (docs/handoffs/gates/phase-8-gate.md) |
-| 9 Monetization | monetization-engineer | Not started |
+| 9 Monetization | monetization-engineer | **Complete** — gate passed (docs/handoffs/gates/phase-9-gate.md) |
 | 10 Compliance | compliance-officer | Not started |
 | 11 Accessibility | accessibility-qa | Not started |
 | 12 Release | release-qa | Not started |

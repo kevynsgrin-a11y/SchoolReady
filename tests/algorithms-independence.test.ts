@@ -37,16 +37,19 @@ function resolveRelative(fromFile: string, spec: string): string {
   throw new Error(`unresolvable import "${spec}" from ${fromFile}`);
 }
 
-const entryFiles = readdirSync(algorithmsDir)
-  .filter((f) => f.endsWith(".ts"))
-  .map((f) => join(algorithmsDir, f))
-  .sort();
+const tsFilesIn = (dir: string): string[] =>
+  readdirSync(dir)
+    .filter((f) => f.endsWith(".ts"))
+    .map((f) => join(dir, f))
+    .sort();
+
+const entryFiles = tsFilesIn(algorithmsDir);
 
 /** BFS transitive closure over relative imports; collects bare imports too. */
-function importClosure(): { closure: string[]; bareImports: string[] } {
-  const seen = new Set<string>(entryFiles);
+function closureOf(entries: readonly string[]): { closure: string[]; bareImports: string[] } {
+  const seen = new Set<string>(entries);
   const bare = new Set<string>();
-  const queue = [...entryFiles];
+  const queue = [...entries];
   while (queue.length > 0) {
     const file = queue.pop()!;
     for (const spec of importSpecifiers(file)) {
@@ -63,6 +66,8 @@ function importClosure(): { closure: string[]; bareImports: string[] } {
   }
   return { closure: [...seen].sort(), bareImports: [...bare].sort() };
 }
+
+const importClosure = (): { closure: string[]; bareImports: string[] } => closureOf(entryFiles);
 
 const stripComments = (source: string): string =>
   source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
@@ -106,5 +111,47 @@ describe("algorithms — §1.1 import-graph independence from monetization", () 
       if (hits) offenders.push(`${relative(repoRoot, file)}: ${hits.join(", ")}`);
     }
     expect(offenders).toEqual([]);
+  });
+});
+
+/**
+ * Phase 9 reverse guard: with src/monetization/ now on disk, prove BOTH
+ * directions of the §1.1 boundary structurally — ranking/plan code cannot
+ * reach monetization, and monetization cannot reach ranking or the plan
+ * pipeline (so no export of it can ever feed a score).
+ */
+describe("§1.1 reverse boundary — monetization isolated from ranking and plan code", () => {
+  const monetizationEntries = tsFilesIn(join(repoRoot, "src", "monetization"));
+  const apiEntries = tsFilesIn(join(repoRoot, "src", "api"));
+
+  it("src/monetization exists and is non-empty (test is not vacuous)", () => {
+    expect(monetizationEntries.length).toBeGreaterThanOrEqual(6);
+    expect(apiEntries.map((f) => relative(repoRoot, f))).toContain("src/api/plan.ts");
+  });
+
+  it("the API/plan closure (src/api/*, incl. plan.ts) reaches no monetization module", () => {
+    const { closure } = closureOf(apiEntries);
+    const offenders = closure
+      .map((f) => relative(repoRoot, f))
+      .filter((p) => p.startsWith("src/monetization/"));
+    expect(offenders).toEqual([]);
+  });
+
+  it("the monetization closure reaches no src/algorithms or src/api module", () => {
+    const { closure } = closureOf(monetizationEntries);
+    expect(closure.length).toBeGreaterThan(monetizationEntries.length); // spans into src/ui — non-vacuous
+    const offenders = closure
+      .map((f) => relative(repoRoot, f))
+      .filter((p) => p.startsWith("src/algorithms/") || p.startsWith("src/api/"));
+    expect(offenders).toEqual([]);
+  });
+
+  it("the monetization closure stays inside src/ and uses no bare package imports", () => {
+    const { closure, bareImports } = closureOf(monetizationEntries);
+    const outside = closure
+      .map((f) => relative(repoRoot, f))
+      .filter((p) => !p.startsWith("src/"));
+    expect(outside).toEqual([]);
+    expect(bareImports).toEqual([]);
   });
 });

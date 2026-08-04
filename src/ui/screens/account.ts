@@ -3,19 +3,28 @@
  * so plainly. Alerts are in-app and channel-less (§1.7: no email/phone
  * column even exists). Core-access notice renders verbatim from the API
  * contract so the §1.2 posture is user-visible.
+ *
+ * [Monetization — Phase 9] The Season Pass block is a COMMERCIAL section
+ * (kind "disclosure"), rendered last — after the assistance-resource alerts
+ * block and everything else (§1.2). Its checkout entry point is honest:
+ * checkout is off in this build (src/monetization/season-pass.ts throws by
+ * construction); purchases arrive only via the Phase 5 fixture-verified
+ * Stripe webhook. No countdowns, no scarcity, no pre-checked anything (§5).
  */
 import type { AlertsData, EntitlementsData } from "../../api/contracts";
 import type { ApiOk } from "../../api/contracts";
 import { ALERT_KINDS } from "../../api/contracts";
 import type { AlertKind } from "../../api/contracts";
+import { seasonPassSurface } from "../../monetization/season-pass";
+import type { Html } from "../html";
 import { html, joinHtml } from "../html";
 import { icon } from "../icons";
 import type { Screen } from "../components/chrome";
 import { button, field, form, linkButton, select } from "../components/forms";
 import { renderFact } from "../render-guard";
 import type { ScreenState } from "../state";
-import { envelopeChrome, foldState, intro } from "./shared";
-import { ACCOUNT } from "../copy/en";
+import { envelopeChrome, foldState, intro, isoDate } from "./shared";
+import { ACCOUNT, MONETIZATION } from "../copy/en";
 
 export interface AccountData {
   alerts: ApiOk<AlertsData>;
@@ -64,7 +73,35 @@ function alertsBlock(alerts: ApiOk<AlertsData>): ReturnType<typeof html> {
   })}`;
 }
 
-export function renderAccount(state: AccountScreenState): Screen {
+/**
+ * [Monetization — Phase 9] Season Pass block. Commercial by nature, so its
+ * section kind is "disclosure" and it renders after everything protected.
+ * The active state's expiry date is a fact and renders only through the
+ * §1.4 guard; the checkout entry point carries the data-upsell marker the
+ * §1.2 route-tree scan keys on.
+ */
+function seasonPassBlock(entitlements: ApiOk<EntitlementsData>, fixtureMode: boolean): Html {
+  const surface = seasonPassSurface(entitlements.data, fixtureMode);
+  const status =
+    surface.kind === "active"
+      ? renderFact({
+          provenanceIds: surface.provenanceIds,
+          provenance: entitlements.provenance,
+          render: () =>
+            html`<p>${ACCOUNT.passActive} ${MONETIZATION.passActiveThrough(isoDate(surface.validUntil))}</p><p class="muted">${MONETIZATION.passAdFree}</p>`,
+        })
+      : html`<p>${ACCOUNT.passNone}</p>`;
+  const checkout =
+    surface.kind === "active"
+      ? null
+      : html`<div class="season-pass-checkout" data-upsell="season-pass"><h3>${MONETIZATION.passCheckoutTitle}</h3><p>${MONETIZATION.passExplainer}</p><p class="muted">${MONETIZATION.passCheckoutUnavailable}</p></div>`;
+  return html`<h2>${icon("receipt-text", { size: 20 })} ${ACCOUNT.passTitle}</h2>${status}${checkout}<p class="muted">${entitlements.data.coreAccessNotice}</p>`;
+}
+
+export function renderAccount(
+  state: AccountScreenState,
+  options: { fixtureMode: boolean } = { fixtureMode: true },
+): Screen {
   const base = {
     title: ACCOUNT.title,
     description: ACCOUNT.lead,
@@ -90,10 +127,9 @@ export function renderAccount(state: AccountScreenState): Screen {
         body: html`<h2>${icon("trash-2", { size: 20 })} ${ACCOUNT.deleteTitle}</h2><p>${ACCOUNT.deleteBody}</p>`,
       },
       {
-        kind: "content" as const,
-        body: html`<h2>${ACCOUNT.passTitle}</h2><p>${
-          entitlements.data.seasonPass ? ACCOUNT.passActive : ACCOUNT.passNone
-        }</p><p class="muted">${entitlements.data.coreAccessNotice}</p>`,
+        // Commercial section: always last (§1.2; composer + route scan enforce).
+        kind: "disclosure" as const,
+        body: seasonPassBlock(entitlements, options.fixtureMode),
       },
     ];
   });

@@ -466,6 +466,27 @@ export const ACCOUNT = {
   passNone: "No Season Pass. Nothing on the core plan is behind it.",
 } as const;
 
+/**
+ * PROVISIONAL COPY — Phase 9 (monetization-engineer). compliance-officer
+ * (Phase 10) owns the final FTC-facing wording of every string in this block
+ * and must review it before ANY live affiliate link or paid checkout ships.
+ * Voice §10 applies; no urgency theatrics, no scarcity, no countdowns (§5).
+ */
+export const MONETIZATION = {
+  /** Rendered ADJACENT to every monetized link by renderMonetizedLink — never footnote-only. */
+  affiliateDisclosure:
+    "Paid link: the retailer pays this site a commission if you buy through it. Commissions never change the prices shown or how options are ordered.",
+  /** Accessible name prefix for monetized anchors ("<retailer> (paid link)"). */
+  affiliateLinkSuffix: "(paid link)",
+  passExplainer:
+    "The Season Pass is a one-time purchase that removes sponsored units from editorial extras. It never changes your plan, prices, comparisons, safety warnings, or deadlines — those are identical for everyone, pass or no pass.",
+  passCheckoutTitle: "Season Pass checkout",
+  passCheckoutUnavailable:
+    "Checkout is switched off in this validation beta: no payment can be taken and no card form exists. This entry point activates when payments launch.",
+  passActiveThrough: (date: string): string => `Active through ${date}.`,
+  passAdFree: "Sponsored units are off for you, including on editorial pages.",
+} as const;
+
 export const STATUS = {
   title: "Data sources",
   lead:

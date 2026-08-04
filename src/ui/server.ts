@@ -457,7 +457,12 @@ export async function handleUiRequest(request: Request, deps: ApiDeps): Promise<
       case "/methodology":
         return htmlResponse(renderMethodology(), session);
       case "/account":
-        return htmlResponse(renderAccount(await loadAccount(session)), session);
+        // [Monetization — Phase 9] fixtureMode drives the Season Pass
+        // checkout entry point's honest availability copy.
+        return htmlResponse(
+          renderAccount(await loadAccount(session), { fixtureMode: deps.flags.fixtureMode }),
+          session,
+        );
       case "/admin/status": {
         const recalls = await callApi<RecallsData>(session, "GET", "/api/recalls");
         if (!recalls.body.ok) {
@@ -575,7 +580,10 @@ export async function handleUiRequest(request: Request, deps: ApiDeps): Promise<
           headers,
         });
         if (response.body.ok) return redirect(session, "/account");
-        return htmlResponse(renderAccount(failureState(response.body)), session);
+        return htmlResponse(
+          renderAccount(failureState(response.body), { fixtureMode: deps.flags.fixtureMode }),
+          session,
+        );
       }
       default:
         return htmlResponse(notFoundScreen(), session, 404);
