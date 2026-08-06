@@ -173,6 +173,17 @@ describe("intake endpoints", () => {
     expect(objects).toEqual([]);
   });
 
+  it("unlabeled fixture uploads fail closed with actionable copy and leave R2 EMPTY", async () => {
+    const client = makeClient({ idPrefix: "u-empty-ocr" });
+    const result = await uploadBytes(client, new TextEncoder().encode("synthetic upload"));
+
+    expect(result.status).toBe(422);
+    expect(result.body.error.code).toBe("upload_unreadable");
+    expect(result.body.error.message).toContain("live OCR is disabled");
+    const { objects } = await env.UPLOAD_BUFFER.list({ prefix: "uploads/" });
+    expect(objects).toEqual([]);
+  });
+
   it("upload rejects non-image/PDF bodies (400) and rate-limits after 5 in a minute (429)", async () => {
     const text = "1 glue stick";
     const bytes = new TextEncoder().encode(text);

@@ -171,7 +171,7 @@ function toApiError(err: unknown): ApiError {
   if (err instanceof OcrFixtureError) {
     // Fixture-mode uploads only parse where a labeled OCR replay exists.
     return new ApiError(
-      "validation_failed",
+      "upload_unreadable",
       422,
       "no fixture OCR output exists for this upload (fixture-mode beta; live OCR is disabled)",
     );

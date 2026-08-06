@@ -7,10 +7,9 @@
   source is OFF (`config/flags.ts`), live Turnstile/Stripe/OCR are
   throwing stubs by construction, all product/price/recall/tax data is
   labeled fixture data, and every page carries the fixture ribbon.
-- Environment honesty: this repo has NO Cloudflare credentials and no
-  real deploy has been performed. Steps below were dry-run to the extent
-  the environment allows (see "Dry-run record"); the first real execution
-  must be attended.
+- Environment honesty: the fixture beta was deployed to
+  `https://backtoacademy.com` on 2026-08-05. D1, KV, R2, and Queue bindings
+  are live; the data-source, Turnstile, Stripe, and OCR caveats above remain.
 
 ## 0. Preconditions (all must be true — see docs/release/launch-checklist.md)
 
@@ -19,16 +18,16 @@
    (non-.example) domain, and a formed legal entity — `npm test` includes
    the release-blocker posture and reviewers must re-check it; the
    congruence gate's BLOCKED-ENV lines have real-device results.
-2. `npm run verify` green at HEAD (lint + typecheck + 812 tests / 56
+2. `npm run verify` green at HEAD (lint + typecheck + 821 tests / 57
    files), `npm run test:a11y` 65/65, `npm run test:e2e` 14/14.
 3. A Cloudflare account with Workers Paid (Queues requires it), and a
    repo admin able to set repository variables/secrets.
 
-## 1. Provision real bindings (one-time)
+## 1. Provision real bindings (one-time; completed 2026-08-05)
 
-The committed `wrangler.jsonc` carries placeholder ids (all zeros —
-local-only fixture posture). Provision real resources and replace ids in a
-release branch commit:
+The committed `wrangler.jsonc` carries the live D1 and KV IDs. The named R2
+bucket and Queue are also provisioned. These commands remain the recovery
+reference if the account ever needs to be rebuilt:
 
 ```sh
 # D1 (relational store)
@@ -50,8 +49,8 @@ npx wrangler d1 migrations apply k8-planner-fixture --remote
 
 Notes:
 - R2 lifecycle rules have day granularity; the 900-second TTL is enforced
-  in code (`src/parsing/upload-buffer.ts`) — add a 1-day lifecycle rule as
-  a belt-and-suspenders sweep.
+  in code (`src/parsing/upload-buffer.ts`). The live bucket also has the
+  `expire-all-after-one-day` lifecycle rule as a defense-in-depth sweep.
 - No Durable Objects are provisioned — §2 reserves DO for live
   family-collaboration sessions, which do not exist in this beta.
 
@@ -152,7 +151,7 @@ Rules:
 | Abuse of upload/alerts | KV `ratelimit:*` buckets are live (5/min token buckets); Turnstile is fixture-grade in the beta — if abused, this is the trigger to accelerate launch item 4 (real Turnstile), not to weaken rate limits |
 | Legal/takedown contact | The registered agent of the legal entity in `config/brand.ts` (UNSET until launch item 1 clears — a reason it blocks release) |
 
-## Dry-run record (this environment, 2026-08-04)
+## Deployment record (2026-08-05)
 
 What could be executed here was executed:
 
@@ -160,16 +159,13 @@ What could be executed here was executed:
   migrations apply cleanly (re-run during both browser suites' web-server
   boot, plus the journey-2 dedicated persist dir every run).
 - `npm run build` — 3 static pages + assets into dist/.
-- `npx wrangler deploy --dry-run` — re-run green at this gate: bundle
-  builds and all five bindings (DB, SOURCE_KV, UPLOAD_BUFFER,
-  INGESTION_QUEUE, FIXTURE_MODE) resolve. No credentials, so no real
-  deploy.
-- Rollback pair mechanics: `tests/schema.test.ts` applies every
-  up/down/up cycle against real D1 (part of the 805-test verify).
-- Post-deploy verification steps 1–3 and 5 executed verbatim against the
-  local staging server (`npx wrangler dev`) — outputs in
-  `docs/release/congruence-gate.md` and `docs/release/artifacts/`.
-
-NOT dry-runnable here: resource provisioning, remote migrations, real
-deploy/rollback, custom-domain attach (no Cloudflare credentials — launch
-item 4).
+- `npx wrangler deploy --dry-run` — bundle builds and all five bindings
+  (DB, SOURCE_KV, UPLOAD_BUFFER, INGESTION_QUEUE, FIXTURE_MODE) resolve.
+- Remote D1 migrations: 8/8 applied; no migrations pending.
+- Live Worker version `5a4a853e-79e5-4894-96ce-2f17840f1826` deployed with
+  apex and `www` Custom Domains plus one Queue producer and consumer.
+- Rollback pair mechanics: `tests/schema.test.ts` applies every up/down/up
+  cycle against D1 as part of the 821-test verification suite.
+- Live checks passed for health, fixture disclosure, static assets, canonical
+  redirect, anonymous intake/confirm/plan persistence, R2 cleanup, and Queue
+  registration. See `docs/release/backtoacademy-launch-runbook.md`.
