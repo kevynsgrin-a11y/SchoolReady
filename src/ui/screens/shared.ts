@@ -17,6 +17,7 @@ import { COMMON, ERRORS } from "../copy/en";
 const ERROR_COPY: Partial<Record<ApiErrorCode, string>> = {
   validation_failed: ERRORS.validation,
   upload_unavailable: ERRORS.uploadUnavailable,
+  upload_unreadable: ERRORS.uploadUnreadable,
   provenance_gate_failure: ERRORS.provenanceSuppressed,
   basket_search_space_exceeded: ERRORS.basketTooLarge,
   not_found: ERRORS.notFound,

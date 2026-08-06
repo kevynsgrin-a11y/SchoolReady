@@ -6,10 +6,14 @@
  * network anywhere (fixture adapters only; live sources stay flag-OFF).
  */
 import { env } from "cloudflare:test";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { DEFAULT_FLAGS } from "../config/flags";
 import { planRefreshJobs, INGESTION_QUEUE_NAME } from "../src/ingestion/jobs";
-import { processRefreshMessages } from "../src/index";
+import {
+  processRefreshMessages,
+  processRefreshQueueMessages,
+  type RefreshQueueMessage,
+} from "../src/index";
 import { makeClient, clearSourceCaches, T0 } from "./api-helpers";
 
 describe("ingestion-refresh queue (§2: Queues for background jobs only)", () => {
@@ -35,5 +39,60 @@ describe("ingestion-refresh queue (§2: Queues for background jobs only)", () =>
     const skips = client.logs.filter((e) => e.event === "refresh_skipped");
     expect(skips).toHaveLength(1);
     expect(skips[0]!.fields["sourceId"]).toBe("nces_ccd");
+  });
+
+  it("acknowledges successful messages individually", async () => {
+    await clearSourceCaches();
+    const client = makeClient({ idPrefix: "q-ack", nowMs: T0 });
+    const [job] = planRefreshJobs(DEFAULT_FLAGS, "2026-08-04T12:00:00.000Z");
+    const ack = vi.fn();
+    const retry = vi.fn();
+    const message: RefreshQueueMessage = {
+      body: job!,
+      attempts: 1,
+      ack,
+      retry,
+    };
+
+    await processRefreshQueueMessages([message], client.deps);
+
+    expect(ack).toHaveBeenCalledOnce();
+    expect(retry).not.toHaveBeenCalled();
+  });
+
+  it("retries only the failed message with bounded backoff", async () => {
+    const client = makeClient({ idPrefix: "q-retry", nowMs: T0 });
+    const job = planRefreshJobs(DEFAULT_FLAGS, "2026-08-04T12:00:00.000Z").find(
+      ({ sourceId }) => sourceId === "affiliate_feeds",
+    );
+    const ack = vi.fn();
+    const retry = vi.fn();
+    const message: RefreshQueueMessage = {
+      body: job!,
+      attempts: 2,
+      ack,
+      retry,
+    };
+    const failingDeps = {
+      ...client.deps,
+      kv: {
+        get: () => Promise.resolve(null),
+        put: () => Promise.reject(new Error("synthetic KV failure")),
+        delete: () => Promise.resolve(),
+      },
+    };
+
+    await processRefreshQueueMessages([message], failingDeps);
+
+    expect(ack).not.toHaveBeenCalled();
+    expect(retry).toHaveBeenCalledWith({ delaySeconds: 60 });
+    expect(client.logs).toContainEqual({
+      event: "refresh_failed",
+      fields: {
+        sourceId: "affiliate_feeds",
+        reason: "pipeline_error",
+        retryAfterSeconds: 60,
+      },
+    });
   });
 });

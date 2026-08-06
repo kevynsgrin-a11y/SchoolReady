@@ -12,6 +12,7 @@ import type { BasketData, CapsuleData, ChecklistData, MergeData, TrendData } fro
 import { renderDocument } from "../src/ui/components/chrome";
 import type { Screen } from "../src/ui/components/chrome";
 import { renderHome } from "../src/ui/screens/home";
+import { renderIntake } from "../src/ui/screens/intake";
 import { renderPlan } from "../src/ui/screens/plan";
 import { renderChecklist } from "../src/ui/screens/checklist";
 import { renderBasket } from "../src/ui/screens/basket";
@@ -20,7 +21,7 @@ import { renderTrends, MIN_ORGANIC_FAMILIES_FOR_TREND } from "../src/ui/screens/
 import { renderMethodology } from "../src/ui/screens/methodology";
 import { renderStatus } from "../src/ui/screens/status";
 import { escapeHtml } from "../src/ui/html";
-import { SUPPRESSION } from "../src/ui/copy/en";
+import { ERRORS, SUPPRESSION } from "../src/ui/copy/en";
 import { EMOJI_RE, SINGLE_ANSWER_WORDS, envelope, record, staleSource } from "./helpers/ui";
 
 const doc = (screen: Screen): string => renderDocument(screen, { fixtureMode: true });
@@ -190,6 +191,14 @@ describe("homepage — five-second test", () => {
     expect(page).not.toContain("ad-slot");
     expect(EMOJI_RE.test(page)).toBe(false);
     expect(page.toLowerCase()).not.toContain("lorem");
+  });
+});
+
+describe("intake — fixture OCR failure", () => {
+  it("routes users to paste or type instead of blaming their fields", () => {
+    const page = doc(renderIntake({ kind: "error", code: "upload_unreadable" }));
+    expect(page).toContain(ERRORS.uploadUnreadable);
+    expect(page).not.toContain(ERRORS.validation);
   });
 });
 

@@ -63,13 +63,12 @@ jobs:
 
   # Production deploy (backtoacademy.com). Gated on the DEPLOY_ENABLED repo
   # variable, same pattern as LHCI_ENABLED above — stays off until the repo
-  # owner has provisioned real Cloudflare resources and pasted their IDs
-  # into wrangler.jsonc (docs/release/backtoacademy-launch-runbook.md).
+  # owner has approved releases from main. Live resource IDs are committed in
+  # wrangler.jsonc (docs/release/backtoacademy-launch-runbook.md).
   # Requires two repo SECRETS (Settings > Secrets and variables > Actions >
   # Secrets): CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID. Only runs on
   # pushes to main that already passed `verify`, so a broken build can never
-  # deploy. `wrangler deploy` re-applies D1 migrations from migrations/ as
-  # part of publish, so the production database schema stays in sync.
+  # deploy. D1 migrations are applied explicitly before the Worker publish.
   deploy:
     # Fires on a push to main (the normal path) or a manual "Run workflow"
     # dispatch against main (docs/release/backtoacademy-launch-runbook.md

@@ -1,6 +1,6 @@
 # Launch checklist — open preconditions with owners
 
-- Owner of this list: release-qa (Phase 12). Status date: 2026-08-04.
+- Owner of this list: release-qa (Phase 12). Status date: 2026-08-05.
 - Plain statement, per the release mandate: **the beta is NOT releasable
   until every item below clears.** Each item is independently blocking.
   The congruence gate (docs/release/congruence-gate.md) passed every line
@@ -48,10 +48,12 @@
   1/7/9, desktop Safari + Firefox walks. Record results per
   device/browser; any failure blocks.
 
-## 4. Credentials + per-source licensing sign-offs — owner: repository owner + compliance-officer
+## 4. Per-source licensing sign-offs — owner: repository owner + compliance-officer
 
-- Cloudflare account + real bindings (runbook §1–2). No live-source flag
-  may flip without a Permitted-fetch ruling recorded in
+- **Cloudflare infrastructure discharged 2026-08-05.** The D1 database, KV
+  namespace, Queue, Worker routes, and R2 upload-buffer bucket are provisioned;
+  see the launch runbook. No live-source flag may flip without a
+  Permitted-fetch ruling recorded in
   `docs/compliance/licensing-register.md` — the test suite fails a flip
   without its ruling (this is enforced, not aspirational). Go-live
   preconditions are itemized per source in the register (NCES CCD, CPSC
@@ -115,7 +117,7 @@
 ---
 
 Standing re-verification before the release commit: `npm run verify`
-green (812/56 since the item-7 correction round; was 805/56),
+green (821 tests / 57 files as of the 2026-08-05 deployment),
 `npm run test:a11y` 65/65, `npm run test:e2e` 14/14 (was 13/13),
 congruence gate re-walked on the REAL staging URL (not local wrangler
 dev) on a real phone and desktop browser as a first-time user — every

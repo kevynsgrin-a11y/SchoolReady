@@ -8,27 +8,25 @@
  * data-bearing screens are Worker-rendered and measured against a running
  * Worker in later phases.
  */
-import { execFileSync } from "node:child_process";
 import { cpSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { build } from "esbuild";
 
 const repoRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 const dist = join(repoRoot, "dist");
 const bundle = join(tmpdir(), `static-site-${process.pid}.mjs`);
 
-execFileSync(
-  join(repoRoot, "node_modules", "esbuild", "bin", "esbuild"),
-  [
-    join(repoRoot, "src", "ui", "static-site.ts"),
-    "--bundle",
-    "--format=esm",
-    "--platform=neutral",
-    `--outfile=${bundle}`,
-  ],
-  { stdio: "inherit" },
-);
+await build({
+  absWorkingDir: repoRoot,
+  entryPoints: ["./src/ui/static-site.ts"],
+  bundle: true,
+  format: "esm",
+  platform: "neutral",
+  outfile: bundle,
+  logLevel: "info",
+});
 
 const site = await import(pathToFileURL(bundle).href);
 

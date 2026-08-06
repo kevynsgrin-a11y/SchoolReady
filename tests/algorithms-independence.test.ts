@@ -21,6 +21,7 @@ import { fileURLToPath } from "node:url";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const algorithmsDir = join(repoRoot, "src", "algorithms");
+const repoRelative = (file: string): string => relative(repoRoot, file).replace(/\\/g, "/");
 
 const IMPORT_RE = /(?:from\s+|import\s*\(\s*)["']([^"']+)["']/g;
 
@@ -54,7 +55,7 @@ function closureOf(entries: readonly string[]): { closure: string[]; bareImports
     const file = queue.pop()!;
     for (const spec of importSpecifiers(file)) {
       if (!spec.startsWith(".")) {
-        bare.add(`${relative(repoRoot, file)} -> ${spec}`);
+        bare.add(`${repoRelative(file)} -> ${spec}`);
         continue;
       }
       const resolved = resolveRelative(file, spec);
@@ -80,7 +81,7 @@ describe("algorithms — §1.1 import-graph independence from monetization", () 
   it("transitive import closure contains no monetization-patterned module path", () => {
     const { closure } = importClosure();
     const offenders = closure
-      .map((f) => relative(repoRoot, f))
+      .map(repoRelative)
       .filter((p) => /(monetization|commission|payout|referral)/i.test(p));
     expect(offenders).toEqual([]);
   });
@@ -88,7 +89,7 @@ describe("algorithms — §1.1 import-graph independence from monetization", () 
   it("closure stays inside src/ and config/ (no external reachability)", () => {
     const { closure } = importClosure();
     const outside = closure
-      .map((f) => relative(repoRoot, f))
+      .map(repoRelative)
       .filter((p) => !p.startsWith("src/") && !p.startsWith("config/"));
     expect(outside).toEqual([]);
   });
@@ -108,7 +109,7 @@ describe("algorithms — §1.1 import-graph independence from monetization", () 
     for (const file of closure) {
       const code = stripComments(readFileSync(file, "utf8"));
       const hits = code.match(/\b(commission|payout|referral|monetization|kickback)\b/gi);
-      if (hits) offenders.push(`${relative(repoRoot, file)}: ${hits.join(", ")}`);
+      if (hits) offenders.push(`${repoRelative(file)}: ${hits.join(", ")}`);
     }
     expect(offenders).toEqual([]);
   });
@@ -126,13 +127,13 @@ describe("§1.1 reverse boundary — monetization isolated from ranking and plan
 
   it("src/monetization exists and is non-empty (test is not vacuous)", () => {
     expect(monetizationEntries.length).toBeGreaterThanOrEqual(6);
-    expect(apiEntries.map((f) => relative(repoRoot, f))).toContain("src/api/plan.ts");
+    expect(apiEntries.map(repoRelative)).toContain("src/api/plan.ts");
   });
 
   it("the API/plan closure (src/api/*, incl. plan.ts) reaches no monetization module", () => {
     const { closure } = closureOf(apiEntries);
     const offenders = closure
-      .map((f) => relative(repoRoot, f))
+      .map(repoRelative)
       .filter((p) => p.startsWith("src/monetization/"));
     expect(offenders).toEqual([]);
   });
@@ -141,7 +142,7 @@ describe("§1.1 reverse boundary — monetization isolated from ranking and plan
     const { closure } = closureOf(monetizationEntries);
     expect(closure.length).toBeGreaterThan(monetizationEntries.length); // spans into src/ui — non-vacuous
     const offenders = closure
-      .map((f) => relative(repoRoot, f))
+      .map(repoRelative)
       .filter((p) => p.startsWith("src/algorithms/") || p.startsWith("src/api/"));
     expect(offenders).toEqual([]);
   });
@@ -149,7 +150,7 @@ describe("§1.1 reverse boundary — monetization isolated from ranking and plan
   it("the monetization closure stays inside src/ and uses no bare package imports", () => {
     const { closure, bareImports } = closureOf(monetizationEntries);
     const outside = closure
-      .map((f) => relative(repoRoot, f))
+      .map(repoRelative)
       .filter((p) => !p.startsWith("src/"));
     expect(outside).toEqual([]);
     expect(bareImports).toEqual([]);

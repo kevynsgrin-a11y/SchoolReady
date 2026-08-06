@@ -41,7 +41,7 @@ import priceHistoryFixtureJson from "../fixtures/price-history/history.fixture.j
  * binding; later phases extend this interface with their own bindings.
  */
 export interface Env {
-  /** D1 database (fixture posture: local-only, placeholder database_id). */
+  /** Live D1 database for anonymous fixture-beta sessions and plans. */
   DB: D1Database;
   /**
    * KV namespace (Phase 2): source-health snapshots ('health:<sourceId>'),
@@ -145,9 +145,50 @@ export async function processRefreshMessages(
   }
 }
 
+/** Structural subset of a Queue message, kept small for deterministic tests. */
+export interface RefreshQueueMessage {
+  readonly body: RefreshJobMessage;
+  readonly attempts: number;
+  ack(): void;
+  retry(options?: { delaySeconds?: number }): void;
+}
+
+/**
+ * Process and settle every Queue message independently. Cloudflare Queues are
+ * at-least-once, so one transient failure must not retry an otherwise
+ * successful batch.
+ */
+export async function processRefreshQueueMessages(
+  messages: readonly RefreshQueueMessage[],
+  deps: ApiDeps,
+): Promise<void> {
+  for (const message of messages) {
+    try {
+      await processRefreshMessages([message.body], deps);
+      message.ack();
+    } catch {
+      const delaySeconds = Math.min(
+        30 * 2 ** Math.max(0, message.attempts - 1),
+        3_600,
+      );
+      deps.logger.log("refresh_failed", {
+        sourceId: message.body.sourceId,
+        reason: "pipeline_error",
+        retryAfterSeconds: delaySeconds,
+      });
+      message.retry({ delaySeconds });
+    }
+  }
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+    if (url.hostname === `www.${BRAND.domain}`) {
+      url.protocol = "https:";
+      url.hostname = BRAND.domain;
+      return Response.redirect(url.toString(), 308);
+    }
     if (url.pathname === "/healthz") {
       return Response.json({
         ok: true,
@@ -169,9 +210,6 @@ export default {
   async queue(batch: MessageBatch<RefreshJobMessage>, env: Env): Promise<void> {
     const deps = buildApiDeps(env);
     deps.logger.log("queue_batch", { queueMessageCount: batch.messages.length });
-    await processRefreshMessages(
-      batch.messages.map((m) => m.body),
-      deps,
-    );
+    await processRefreshQueueMessages(batch.messages, deps);
   },
 } satisfies ExportedHandler<Env, RefreshJobMessage>;

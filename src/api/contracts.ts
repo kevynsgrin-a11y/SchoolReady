@@ -94,6 +94,7 @@ export const API_ERROR_CODES = [
   "rate_limited",
   "session_required",
   "upload_unavailable",
+  "upload_unreadable",
   "basket_search_space_exceeded",
   "webhook_verification_failed",
   "live_integration_disabled",
