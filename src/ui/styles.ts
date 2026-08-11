@@ -95,9 +95,16 @@ ${typeStepClasses()}
 .nav-link-active { border-bottom-color: var(--color-action); color: var(--color-action); }
 .site-footer { border-top: 1px solid var(--color-rule); margin-top: var(--space-7); padding: var(--space-5) var(--space-4); background: var(--color-surface); }
 .footer-brand { color: var(--color-graphite); font-family: var(--font-data); font-size: var(--text-data-s-size); margin: var(--space-4) 0 0; }
+.analytics-preferences-button { appearance: none; background: transparent; border: 0; font: inherit; }
 .fixture-ribbon, .offline-banner { display: flex; gap: var(--space-2); align-items: flex-start; padding: var(--space-2) var(--space-4); font-family: var(--font-data); font-size: var(--text-data-s-size); line-height: var(--text-data-s-line); }
 .fixture-ribbon { background: var(--status-sponsored-tint); color: var(--status-sponsored); }
 .offline-banner { background: var(--status-stale-tint); color: var(--status-stale); border-bottom: 1px dashed var(--status-stale); }
+.analytics-consent { border-top: 1px solid var(--color-rule); background: var(--color-surface); padding: var(--space-4); }
+.analytics-consent-inner { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--space-4); max-width: var(--container-page); margin: 0 auto; }
+.analytics-consent-inner > div:first-child { max-width: 760px; }
+.analytics-consent-title { font-size: var(--text-heading-size); line-height: var(--text-heading-line); margin-bottom: var(--space-2); }
+.analytics-consent-actions { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--space-2); }
+.analytics-consent-status, .analytics-privacy-signal { color: var(--color-graphite); font-family: var(--font-data); font-size: var(--text-data-s-size); line-height: var(--text-data-s-line); margin-bottom: var(--space-2); }
 
 /* Cards / sheets: Level 1 elevation = rule + faint shadow (direction §4). */
 .card { background: var(--color-surface); border: 1px solid rgba(92,102,96,0.2); border-radius: var(--radius-2); box-shadow: var(--elevation-card); padding: var(--space-4); margin-bottom: var(--space-4); }
@@ -273,7 +280,7 @@ legend { font-weight: 700; padding: 0 var(--space-2); }
 /* Print: the checklist is the export. Store-trip groups stay intact on
    paper ([P12-4]): headings print with their rows, never orphaned. */
 @media print {
-  .site-header, .site-footer, .fixture-ribbon, .offline-banner, .checklist-bar, .button, .skip-link, script { display: none !important; }
+  .site-header, .site-footer, .fixture-ribbon, .offline-banner, .analytics-consent, .checklist-bar, .button, .skip-link, script { display: none !important; }
   body { background: #FFFFFF; }
   .checklist-store-group { break-inside: avoid; page-break-inside: avoid; }
   .checklist-store { break-after: avoid; page-break-after: avoid; }

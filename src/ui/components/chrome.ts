@@ -6,6 +6,7 @@
  * enforces the §1.2 layout rule and safety-first ordering on every render
  * (slots.ts): a violating section order throws instead of shipping.
  */
+import { ANALYTICS_CONFIG } from "../../../config/analytics";
 import { BRAND } from "../../../config/brand";
 import type { Html } from "../html";
 import { html, joinHtml, raw } from "../html";
@@ -13,7 +14,7 @@ import { icon } from "../icons";
 import type { ContainerName } from "../tokens";
 import type { PageSection } from "../slots";
 import { assertSafetyFirst, assertSlotPlacement } from "../slots";
-import { COMMON } from "../copy/en";
+import { ANALYTICS, COMMON } from "../copy/en";
 
 export const NAV_KEYS = [
   "home",
@@ -80,7 +81,7 @@ function footer(active: NavKey | null): Html {
   const items = NAV_ITEMS.filter((i) => i.key !== "home");
   return html`<footer class="site-footer"><nav class="footer-nav" aria-label="All pages">${joinHtml(
     items.map((i) => navLink(i, active)),
-  )}<a class="nav-link" href="/assets/licenses/ISC-lucide.txt">${COMMON.footerLicenses}</a></nav><p class="footer-brand">${BRAND.name}</p></footer>`;
+  )}<a class="nav-link" href="/assets/licenses/ISC-lucide.txt">${COMMON.footerLicenses}</a><button class="nav-link analytics-preferences-button" type="button" data-analytics-open hidden>${ANALYTICS.preferences}</button></nav><p class="footer-brand">${BRAND.name}</p></footer>`;
 }
 
 function fixtureRibbon(fixtureMode: boolean): Html {
@@ -94,6 +95,12 @@ function fixtureRibbon(fixtureMode: boolean): Html {
 /** Hidden until the enhancement layer detects connection loss. */
 function offlineBanner(): Html {
   return html`<div class="offline-banner" id="offline-banner" role="status" hidden>${icon("wifi-off", { size: 20 })}<span>${COMMON.offline}</span></div>`;
+}
+
+function analyticsConsent(measurementId: string | null): Html {
+  return html`<aside class="analytics-consent" aria-label="${ANALYTICS.regionLabel}" data-analytics-consent data-storage-key="${ANALYTICS_CONFIG.preferenceStorageKey}" data-cookie-prefix="${ANALYTICS_CONFIG.cookiePrefix}" data-cookie-name-prefix="${ANALYTICS_CONFIG.cookieNamePrefix}" data-cookie-lifetime-seconds="${ANALYTICS_CONFIG.cookieLifetimeSeconds}" data-status-pending="${ANALYTICS.pendingStatus}" data-status-granted="${ANALYTICS.allowedStatus}" data-status-denied="${ANALYTICS.deniedStatus}"${
+    measurementId ? html` data-measurement-id="${measurementId}"` : null
+  } hidden><div class="analytics-consent-inner"><div><h2 class="analytics-consent-title">${ANALYTICS.title}</h2><p>${ANALYTICS.body}</p><p class="analytics-privacy-signal" data-analytics-privacy-signal hidden>${ANALYTICS.privacySignalStatus}</p><p class="analytics-consent-status" data-analytics-status role="status"></p><a href="/account">${ANALYTICS.privacyLink}</a></div><div class="analytics-consent-actions"><button class="button button-secondary" type="button" data-analytics-decline>${ANALYTICS.decline}</button><button class="button button-primary" type="button" data-analytics-allow>${ANALYTICS.allow}</button></div></div></aside>`;
 }
 
 export function renderSections(sections: readonly PageSection[]): Html {
@@ -127,9 +134,17 @@ export interface RenderOptions {
   seo?: SeoHead;
 }
 
+/** Analytics is limited to the same public, cookieless pages SEO may index. */
+export function isAnalyticsEligible(seo: SeoHead): boolean {
+  return seo.robots === "index,follow";
+}
+
 /** Composes the full HTML document for a screen. */
 export function renderDocument(screen: Screen, options: RenderOptions): string {
   const seo = options.seo ?? SEO_DEFAULT;
+  const measurementId = isAnalyticsEligible(seo)
+    ? ANALYTICS_CONFIG.measurementId
+    : null;
   const doc = html`<!doctype html>
 <html lang="en">
 <head>
@@ -153,7 +168,9 @@ ${header(screen.activeNav)}
 ${renderSections(screen.sections)}
 </main>
 ${footer(screen.activeNav)}
+${analyticsConsent(measurementId)}
 <script src="/assets/app.js" defer></script>
+<script src="/assets/analytics.js" defer></script>
 </body>
 </html>`;
   return doc.__html;

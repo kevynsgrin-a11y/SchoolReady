@@ -97,8 +97,17 @@ test.beforeAll(async () => {
   );
 
   server = spawn(
-    "npx",
-    ["wrangler", "dev", "--port", "8788", "--ip", "127.0.0.1", "--persist-to", PERSIST],
+    process.execPath,
+    [
+      join(process.cwd(), "node_modules", "wrangler", "bin", "wrangler.js"),
+      "dev",
+      "--port",
+      "8788",
+      "--ip",
+      "127.0.0.1",
+      "--persist-to",
+      PERSIST,
+    ],
     { cwd: process.cwd(), stdio: "ignore", detached: true },
   );
   await waitForHealthz(120_000);

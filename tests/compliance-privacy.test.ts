@@ -93,6 +93,19 @@ describe("privacy policy — renders complete and plain on /account", () => {
     expect(PRIVACY.childrenBody).toContain("no targeted advertising");
     expect(page).toContain(rendered(PRIVACY.childrenBody));
   });
+
+  it("discloses optional GA4 without weakening the plan-data boundary", () => {
+    expect(PRIVACY.thirdPartiesBody).toContain("Google Analytics");
+    expect(PRIVACY.thirdPartiesBody).toContain("query strings are removed");
+    expect(PRIVACY.thirdPartiesBody).toContain("saved-plan pages are excluded");
+    expect(PRIVACY.thirdPartiesBody).toContain(
+      "advertising signals and personalization are disabled",
+    );
+    expect(PRIVACY.thirdPartiesBody).toContain(
+      "Nothing you enter in a plan is sold, shared, or sent to a third party",
+    );
+    expect(page).toContain(rendered(PRIVACY.thirdPartiesBody));
+  });
 });
 
 describe("disclaimers — all four fact categories render", () => {
