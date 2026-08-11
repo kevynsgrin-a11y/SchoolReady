@@ -66,10 +66,20 @@ can be entered, stored, or logged.
   Tests: `tests-workers/monetization-routes.test.ts` (route sweep),
   `tests/monetization-route-scan.test.ts`.
 - No targeting substrate exists: the schema stores no demographics, no
-  interests, no identity, no contact channel (`tests/schema.test.ts`), and
-  §1.7 data never reaches third parties because nothing is sent to third
-  parties at all (no third-party script, pixel, or SDK ships; the §1.2
-  scan sweeps rendered pages).
+  interests, no identity, no contact channel (`tests/schema.test.ts`).
+- Optional Google Analytics is basic-consent only. The provider script is
+  not present in raw HTML and is not requested until a visitor opts in.
+  Advertising storage, advertising user data, advertising personalization,
+  Google signals, and ad-personalization signals stay denied or disabled.
+  Browser privacy signals override a stored grant. Code:
+  `public/assets/analytics.js`; tests: `tests/analytics-consent.test.ts`.
+- The server exposes the public measurement ID only on `index,follow`
+  renders. Session-bearing personalized routes fail closed to `noindex`, so
+  the provider cannot load on a saved-plan page. Page and referrer URLs have
+  query strings and fragments removed before configuration; no user ID,
+  user property, plan value, or custom event is sent. Code:
+  `src/ui/components/chrome.ts`, `config/analytics.ts`; tests:
+  `tests/analytics-consent.test.ts`, `tests/seo-route-metadata.test.ts`.
 - The only commercial mechanics are contextual and identical for everyone:
   a Season Pass that gates ad-free extras ONLY (never core content —
   byte-equality proven) and, in the future, disclosed affiliate links.
@@ -96,5 +106,7 @@ route through compliance-officer before design.
 
 The plain-language privacy policy (including the children's clause) renders
 on the alerts-and-privacy page from `src/ui/copy/en.ts` (`PRIVACY`), under
-both content lints. FTC affiliate-disclosure copy is finalized in the
-`MONETIZATION` block of the same file.
+both content lints. It discloses the optional analytics provider, eligible
+surface, cookie lifetime, sanitization boundary, and preference control.
+FTC affiliate-disclosure copy is finalized in the `MONETIZATION` block of
+the same file.

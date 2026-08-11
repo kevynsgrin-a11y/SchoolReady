@@ -49,6 +49,27 @@ export const COMMON = {
   print: "Print this checklist",
 } as const;
 
+/**
+ * Optional public-page analytics consent copy. The provider never loads
+ * before an explicit opt-in, and saved-plan pages remain ineligible even
+ * after consent (config/analytics.ts + src/ui/components/chrome.ts).
+ */
+export const ANALYTICS = {
+  preferences: "Analytics choices",
+  regionLabel: "Optional site analytics",
+  title: "Choose optional site analytics",
+  body:
+    "Analytics is off unless you allow it. If allowed, Google Analytics receives the public page path without its query string, the page title, a referrer without its query string, general device and browser details, and basic interactions. It never runs on pages tied to a saved plan. Advertising signals and personalization stay off.",
+  allow: "Allow site analytics",
+  decline: "Keep analytics off",
+  pendingStatus: "No analytics choice has been saved.",
+  allowedStatus: "Site analytics is allowed on eligible public pages.",
+  deniedStatus: "Site analytics is off.",
+  privacySignalStatus:
+    "Your browser sends a privacy signal, so site analytics remains off.",
+  privacyLink: "Read the privacy policy",
+} as const;
+
 export const ERRORS = {
   rateLimited: (retryAfterSeconds: number | null): string =>
     retryAfterSeconds === null
@@ -552,6 +573,7 @@ export const PRIVACY = {
     "The supply-list items you confirmed, saved as structured fields from fixed vocabularies — never the pasted text or the photo itself.",
     "Children as numbers — child 1, child 2 — with an optional grade. There is no name field anywhere to fill in.",
     "What you marked as already owned, your alert choices, an optional US state for tax math, and a Season Pass record if one exists.",
+    "Your optional analytics choice is stored in this browser. If you allow analytics, first-party measurement cookies expire after 90 days and do not renew automatically.",
   ],
   neverTitle: "What is never collected, stored, or shared",
   neverItems: [
@@ -570,13 +592,13 @@ export const PRIVACY = {
     "Everything else is kept only so your plan is there when you come back. Nothing expires it automatically in this beta; the delete control below removes all of it whenever you choose.",
   thirdPartiesTitle: "Third parties",
   thirdPartiesBody:
-    "Nothing you enter is sold, shared, or sent to a third party. Server logs are restricted to an allowlist of opaque ids and counts, so free text cannot end up in a log even by mistake.",
+    "Nothing you enter in a plan is sold, shared, or sent to a third party. If you explicitly allow optional analytics, Google Analytics receives sanitized usage from eligible public pages only: query strings are removed, saved-plan pages are excluded, and advertising signals and personalization are disabled. Server logs remain restricted to an allowlist of opaque ids and counts, so free text cannot end up in a log even by mistake.",
   childrenTitle: "Children",
   childrenBody:
     "This is a tool for parents and caregivers. There are no child accounts, no login of any kind, no data collected from or about an identifiable child, and no targeted advertising — to anyone, of any age.",
   rightsTitle: "Your controls",
   rightsBody:
-    "Export everything this session stores as a machine-readable file, or delete it all in one pass — both are below, and neither requires contacting anyone.",
+    "Use Analytics choices in the footer to allow or refuse optional analytics at any time. Export everything this session stores as a machine-readable file, or delete it all in one pass — both are below, and neither requires contacting anyone.",
 } as const;
 
 /**
