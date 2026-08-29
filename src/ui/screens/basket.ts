@@ -173,9 +173,22 @@ export function renderBasket(
     }
 
     if (data.basket === null) {
+      // These two strings were swapped: the lead rendered "your inventory
+      // already covers every required item" — a false factual claim — to
+      // first-time visitors who have no plan at all, while a full sentence
+      // was used as a button label. Only claim full coverage when something
+      // is actually covered; otherwise say there is nothing to compare yet.
+      const nothingLeftToBuy = data.coveredLineKeys.length > 0;
       out.push({
         kind: "content",
-        body: html`<p class="lead">${BASKET.emptyNothingToBuy}</p>${linkButton({ label: BASKET.emptyNoPlan, href: "/intake", variant: "secondary", icon: "clipboard-paste" })}`,
+        body: html`<p class="lead">${
+          nothingLeftToBuy ? BASKET.emptyNothingToBuy : BASKET.emptyNoPlan
+        }</p>${linkButton({
+          label: BASKET.emptyAddListCta,
+          href: "/intake",
+          variant: "secondary",
+          icon: "clipboard-paste",
+        })}`,
       });
       return out;
     }

@@ -688,10 +688,28 @@ describe("basket — Pareto UI states", () => {
     expect(page).toContain("affiliate price disagrees with neutral source");
   });
 
-  it("nothing-to-buy (basket null) is an honest state, not an error", () => {
+  it("no-plan (basket null, nothing covered) says there is nothing to compare yet", () => {
+    // The API returns basket:null with coveredLineKeys:[] for an anonymous
+    // visitor with no session (src/api/routes.ts ctx.session === null). That
+    // is "no plan", NOT "your inventory covers everything" — claiming coverage
+    // to someone who has no inventory is a false factual assertion.
     const page = doc(
       renderBasket(
         { kind: "ready", envelope: envelope(basketData(null), {}) },
+        { view: null, daysUntilNeeded: null },
+      ),
+    );
+    expect(page).toContain("Nothing to compare yet");
+    expect(page).not.toContain("inventory already covers");
+  });
+
+  it("nothing-to-buy (basket null, lines covered) is an honest state, not an error", () => {
+    const page = doc(
+      renderBasket(
+        {
+          kind: "ready",
+          envelope: envelope({ ...basketData(null), coveredLineKeys: ["crayons|*|*|*"] }, {}),
+        },
         { view: null, daysUntilNeeded: null },
       ),
     );

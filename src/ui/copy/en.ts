@@ -207,6 +207,12 @@ export const INTAKE = {
   reviewChild: "Whose list is this?",
   reviewChildOption: (ordinal: number): string => `Child ${ordinal}`,
   reviewNewChild: (ordinal: number): string => `Add child ${ordinal}`,
+  /**
+   * Placeholder shown once a household already has at least one child. Without
+   * it the browser preselects the first option, so a second child's list
+   * silently merges into Child 1 and the per-child receipt contradicts itself.
+   */
+  reviewChildChoose: "Choose a child",
   reviewGrade: "Grade",
   reviewGradeNone: "Not set",
   reviewYear: "School year",
@@ -297,6 +303,8 @@ export const BASKET = {
     "Landed cost means items plus tax plus shipping, counted per store trip. There are four honest ways to slice it — we never collapse them into one answer.",
   emptyNoPlan: "Nothing to compare yet. Save a supply list and the stores line up here.",
   emptyNothingToBuy: "Nothing left to buy: your inventory already covers every required item on the plan.",
+  /** Short action label. These are button text, not a sentence. */
+  emptyAddListCta: "Add a supply list",
   infeasible:
     "No store combination covers every required item right now. The gaps are listed below; fix what you can or check back after prices refresh.",
   viewLowestCost: VIEW_LOWEST_COST,

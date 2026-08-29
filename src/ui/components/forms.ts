@@ -84,11 +84,18 @@ export interface SelectOption {
   selected?: boolean;
 }
 
-export function select(args: { id: string; name: string; options: readonly SelectOption[] }): Html {
+export function select(args: {
+  id: string;
+  name: string;
+  options: readonly SelectOption[];
+  required?: boolean;
+}): Html {
   const options = args.options.map(
     (o) => html`<option value="${o.value}"${o.selected ? html` selected` : null}>${o.label}</option>`,
   );
-  return html`<select class="control select" id="${args.id}" name="${args.name}">${joinHtml(options)}</select>`;
+  return html`<select class="control select" id="${args.id}" name="${args.name}"${
+    args.required ? html` required` : null
+  }>${joinHtml(options)}</select>`;
 }
 
 export function checkbox(args: {
@@ -108,8 +115,15 @@ export function form(args: {
   method?: "post" | "get";
   body: readonly HtmlValue[];
   ariaLabel?: string;
+  /**
+   * Required on any form carrying a file input. Without it a browser encodes
+   * the file as application/x-www-form-urlencoded and transmits only the
+   * FILENAME, so the server receives a string instead of a File and blames the
+   * user for a client-side encoding fault.
+   */
+  enctype?: "multipart/form-data";
 }): Html {
   return html`<form action="${args.action}" method="${args.method ?? "post"}"${
-    args.ariaLabel ? html` aria-label="${args.ariaLabel}"` : null
-  }>${args.body}</form>`;
+    args.enctype ? html` enctype="${args.enctype}"` : null
+  }${args.ariaLabel ? html` aria-label="${args.ariaLabel}"` : null}>${args.body}</form>`;
 }

@@ -134,6 +134,9 @@ function manualForm(): Html {
 function uploadForm(): Html {
   return form({
     action: "/intake/upload",
+    // Carries a file input: without multipart encoding the browser sends only
+    // the filename string and the upload path can never receive bytes.
+    enctype: "multipart/form-data",
     ariaLabel: INTAKE.tabUpload,
     body: [
       html`<p class="muted">${INTAKE.uploadPrivacy}</p>`,
@@ -260,9 +263,18 @@ function reviewSection(state: Extract<IntakeScreenState, { kind: "review" }>): H
 
   const confirmables = review.items.filter((i) => i.proposed !== null).length;
 
+  // With no explicit default the browser preselects the FIRST option, so a
+  // second child's list silently merges into Child 1 and the per-child receipt
+  // renders the same child twice with two different numbers. Defaulting to
+  // "new child" only inverts the error (two lists for ONE child then split).
+  // Once a household has any child, force an explicit choice instead.
+  const hasExistingChildren = ordinals.length > 0;
   const memberOptions = [
+    ...(hasExistingChildren
+      ? [{ value: "", label: INTAKE.reviewChildChoose, selected: true }]
+      : []),
     ...ordinals.map((o) => ({ value: String(o), label: INTAKE.reviewChildOption(o) })),
-    { value: String(nextOrdinal), label: INTAKE.reviewNewChild(nextOrdinal), selected: ordinals.length === 0 },
+    { value: String(nextOrdinal), label: INTAKE.reviewNewChild(nextOrdinal), selected: !hasExistingChildren },
   ];
 
   return html`<h1>${INTAKE.reviewTitle}</h1>
@@ -280,7 +292,12 @@ ${form({
         field({
           id: "confirm-member",
           label: INTAKE.reviewChild,
-          control: select({ id: "confirm-member", name: "memberOrdinal", options: memberOptions }),
+          control: select({
+            id: "confirm-member",
+            name: "memberOrdinal",
+            options: memberOptions,
+            required: hasExistingChildren,
+          }),
         }),
         field({
           id: "confirm-year",

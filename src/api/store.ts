@@ -105,12 +105,23 @@ export async function getProvenanceRecords(
   const out: Record<string, ProvenanceRecord> = {};
   const unique = [...new Set(ids)];
   if (unique.length === 0) return out;
-  const placeholders = unique.map(() => "?").join(", ");
-  const { results } = await db
-    .prepare(`SELECT * FROM provenance WHERE id IN (${placeholders})`)
-    .bind(...unique)
-    .all<ProvenanceDbRow>();
-  for (const r of results) {
+  // D1 caps bound parameters per query (100). Every user-facing read funnels
+  // through here with one provenance id per row, so an ordinary multi-child
+  // household otherwise exceeds the cap and 500s permanently on every core
+  // endpoint. purgeHousehold already chunks its deletes at 50; the read path
+  // needs the same treatment.
+  const CHUNK = 50;
+  const rows: ProvenanceDbRow[] = [];
+  for (let i = 0; i < unique.length; i += CHUNK) {
+    const batch = unique.slice(i, i + CHUNK);
+    const placeholders = batch.map(() => "?").join(", ");
+    const { results } = await db
+      .prepare(`SELECT * FROM provenance WHERE id IN (${placeholders})`)
+      .bind(...batch)
+      .all<ProvenanceDbRow>();
+    rows.push(...results);
+  }
+  for (const r of rows) {
     out[r.id] = {
       id: r.id,
       source: r.source,

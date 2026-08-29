@@ -155,7 +155,25 @@ export function renderDocument(screen: Screen, options: RenderOptions): string {
 <meta name="robots" content="${seo.robots}">
 ${seo.canonicalUrl ? html`<link rel="canonical" href="${seo.canonicalUrl}">
 ` : null}${joinHtml(seo.jsonLd.map((block) => html`<script type="application/ld+json">${raw(block)}</script>
-`))}<meta name="theme-color" content="#F7F8F2">
+`))}<meta property="og:type" content="website">
+<meta property="og:site_name" content="${BRAND.name}">
+<meta property="og:title" content="${screen.title} — ${BRAND.name}">
+<meta property="og:description" content="${screen.description}">
+<meta property="og:url" content="${seo.canonicalUrl ?? `https://${BRAND.domain}/`}">
+<meta property="og:image" content="https://${BRAND.domain}/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="${BRAND.name} — turn the supply list into a finished errand.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${screen.title} — ${BRAND.name}">
+<meta name="twitter:description" content="${screen.description}">
+<meta name="twitter:image" content="https://${BRAND.domain}/og-image.png">
+<meta name="theme-color" content="#F7F8F2">
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preload" href="/assets/fonts/atkinson-hyperlegible-next-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/bricolage-grotesque-latin-700-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="/assets/ui.css">
 <link rel="manifest" href="/manifest.webmanifest">
 </head>

@@ -44,6 +44,13 @@ export function buildStylesheet(): string {
 
 /* Base */
 *, *::before, *::after { box-sizing: border-box; }
+/* The UA rule [hidden]{display:none} is user-agent origin, so ANY author
+   declaration that sets display beats it regardless of selector specificity
+   (.offline-banner{display:flex}, .button{display:inline-flex}). That silently
+   makes the hidden attribute inert — the progressive-enhancement primitive
+   this UI relies on. Restore the contract in the author sheet so hidden is
+   authoritative everywhere. Regression-tested in tests/ui-styles.test.ts. */
+[hidden] { display: none !important; }
 html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0;

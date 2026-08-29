@@ -181,30 +181,63 @@ export async function processRefreshQueueMessages(
   }
 }
 
+/**
+ * Content-Security-Policy. The UI ships ZERO inline scripts, inline event
+ * handlers, <style> blocks and style="" attributes (verified across every
+ * rendered route), so no 'unsafe-inline' or 'unsafe-eval' is needed anywhere.
+ * JSON-LD is `application/ld+json`, which is data rather than an executed
+ * script, so script-src does not gate it.
+ *
+ * googletagmanager/google-analytics appear ONLY because the consent-gated GA4
+ * module (public/assets/analytics.js) injects a tag after an explicit opt-in.
+ * Nothing is fetched from them until the visitor allows it; listing them here
+ * does not cause a request. Remove both lines if GA4 is ever dropped.
+ */
+const CSP = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "object-src 'none'",
+  "frame-ancestors 'none'",
+  "form-action 'self'",
+  "script-src 'self' https://www.googletagmanager.com",
+  "style-src 'self'",
+  "img-src 'self' data:",
+  "font-src 'self'",
+  "connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com",
+  "manifest-src 'self'",
+  "worker-src 'self'",
+  "upgrade-insecure-requests",
+].join("; ");
+
+/**
+ * Response hardening applied at the single egress point. Cloudflare adds HSTS
+ * at the zone level; everything else has to come from the Worker.
+ */
+function withSecurityHeaders(response: Response): Response {
+  const headers = new Headers(response.headers);
+  const contentType = headers.get("content-type") ?? "";
+  headers.set("X-Content-Type-Options", "nosniff");
+  headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  headers.set("X-Frame-Options", "DENY");
+  headers.set(
+    "Permissions-Policy",
+    "geolocation=(), camera=(), microphone=(), payment=(), usb=(), interest-cohort=()",
+  );
+  headers.set("Cross-Origin-Opener-Policy", "same-origin");
+  headers.set("Cross-Origin-Resource-Policy", "same-origin");
+  // CSP is meaningful for documents; skip it on JSON/asset responses so the
+  // header budget stays on the surface that can actually execute script.
+  if (contentType.includes("text/html")) headers.set("Content-Security-Policy", CSP);
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
-    const url = new URL(request.url);
-    if (url.hostname === `www.${BRAND.domain}`) {
-      url.protocol = "https:";
-      url.hostname = BRAND.domain;
-      return Response.redirect(url.toString(), 308);
-    }
-    if (url.pathname === "/healthz") {
-      return Response.json({
-        ok: true,
-        service: BRAND.name,
-        fixtureMode: DEFAULT_FLAGS.fixtureMode,
-      });
-    }
-    if (url.pathname.startsWith("/api/")) {
-      return handleApiRequest(request, buildApiDeps(env));
-    }
-    // UI layer (Phase 7): server-rendered HTML over the same deps/API.
-    // Static files (fonts, client JS, service worker) are served by the
-    // Workers Static Assets layer before this handler runs in production.
-    const uiResponse = await handleUiRequest(request, buildApiDeps(env));
-    if (uiResponse) return uiResponse;
-    return new Response("Not found", { status: 404 });
+    return withSecurityHeaders(await route(request, env));
   },
 
   async queue(batch: MessageBatch<RefreshJobMessage>, env: Env): Promise<void> {
@@ -213,3 +246,28 @@ export default {
     await processRefreshQueueMessages(batch.messages, deps);
   },
 } satisfies ExportedHandler<Env, RefreshJobMessage>;
+
+async function route(request: Request, env: Env): Promise<Response> {
+  const url = new URL(request.url);
+  if (url.hostname === `www.${BRAND.domain}`) {
+    url.protocol = "https:";
+    url.hostname = BRAND.domain;
+    return Response.redirect(url.toString(), 308);
+  }
+  if (url.pathname === "/healthz") {
+    return Response.json({
+      ok: true,
+      service: BRAND.name,
+      fixtureMode: DEFAULT_FLAGS.fixtureMode,
+    });
+  }
+  if (url.pathname.startsWith("/api/")) {
+    return handleApiRequest(request, buildApiDeps(env));
+  }
+  // UI layer (Phase 7): server-rendered HTML over the same deps/API.
+  // Static files (fonts, client JS, service worker) are served by the
+  // Workers Static Assets layer before this handler runs in production.
+  const uiResponse = await handleUiRequest(request, buildApiDeps(env));
+  if (uiResponse) return uiResponse;
+  return new Response("Not found", { status: 404 });
+}

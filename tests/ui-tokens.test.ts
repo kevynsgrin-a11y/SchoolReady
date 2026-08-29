@@ -120,6 +120,19 @@ describe("generated CSS", () => {
     RADII.forEach((px, i) => expect(css).toContain(`--radius-${i}: ${px}px`));
   });
 
+  it("restores the [hidden] contract ahead of any rule that sets display", () => {
+    // Regression: `[hidden]{display:none}` is a USER-AGENT rule, so any author
+    // declaration setting `display` beats it regardless of specificity. Without
+    // an author-side reset, `.offline-banner{display:flex}` rendered a false
+    // "You are offline" banner on every route in production, and
+    // `.button{display:inline-flex}` unhid progressive-enhancement controls.
+    expect(sheet).toContain("[hidden] { display: none !important; }");
+    const reset = sheet.indexOf("[hidden] { display: none !important; }");
+    const offlineBanner = sheet.indexOf(".fixture-ribbon, .offline-banner { display:");
+    expect(reset).toBeGreaterThan(-1);
+    expect(offlineBanner).toBeGreaterThan(reset);
+  });
+
   it("emits --font-* and --text-* properties for every step", () => {
     for (const role of ["display", "body", "data"]) expect(css).toContain(`--font-${role}:`);
     for (const step of Object.keys(TYPE_SCALE)) {
