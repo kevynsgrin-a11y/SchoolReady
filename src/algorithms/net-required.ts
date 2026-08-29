@@ -165,9 +165,21 @@ export function computeNetRequired(
     const allShareable = members.every((m) => m.shareable);
     const anyShareable = members.some((m) => m.shareable);
     const mixedShareability = anyShareable && !allShareable;
+    // One child can legitimately contribute two requirement rows for the same
+    // line (a teacher list plus a PTA list). Coalesce by member BEFORE the
+    // math: otherwise the receipt renders the same child twice with different
+    // numbers ("Child 1: 4" / "Child 1: 2"), and for a shareable line the
+    // max() below would take one list's figure instead of that child's total.
+    const unitsByMember = new Map<number, number>();
+    for (const m of members) {
+      unitsByMember.set(m.memberOrdinal, (unitsByMember.get(m.memberOrdinal) ?? 0) + m.requiredUnits);
+    }
+    const perMemberUnits = [...unitsByMember.entries()]
+      .map(([memberOrdinal, requiredUnits]) => ({ memberOrdinal, requiredUnits: round(requiredUnits, 4) }))
+      .sort((a, b) => a.memberOrdinal - b.memberOrdinal);
     const gross = allShareable
-      ? Math.max(...members.map((m) => m.requiredUnits))
-      : members.reduce((s, m) => s + m.requiredUnits, 0);
+      ? Math.max(...perMemberUnits.map((m) => m.requiredUnits))
+      : perMemberUnits.reduce((s, m) => s + m.requiredUnits, 0);
     const inv = usableByKey.get(key);
     const usable = round(inv?.units ?? 0, 4);
     const reserve = reserveBySlug.get(first.productTypeSlug) ?? 0;
@@ -188,9 +200,7 @@ export function computeNetRequired(
       reserveUnits: reserve,
       netRequiredUnits: net,
       unitsToBuy: Math.ceil(net),
-      perMember: members
-        .map((m) => ({ memberOrdinal: m.memberOrdinal, requiredUnits: m.requiredUnits }))
-        .sort((a, b) => a.memberOrdinal - b.memberOrdinal),
+      perMember: perMemberUnits,
       provenanceIds: unionProvenance(
         ...members.map((m) => m.provenanceIds),
         ...(inv?.provenanceIds ?? []),

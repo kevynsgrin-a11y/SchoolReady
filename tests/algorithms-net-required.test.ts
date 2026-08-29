@@ -213,3 +213,41 @@ describe("net-required — §1.5 pre-merge gate", () => {
     ]);
   });
 });
+
+describe("net-required — one member contributing two requirement rows", () => {
+  // A parent legitimately adds two lists for the SAME child (a teacher list
+  // and a PTA list). Before coalescing, perMember rendered the same child
+  // twice with different numbers ("Child 1: 4" / "Child 1: 2") — the receipt
+  // contradicted itself — and a shareable line took max() of the two rows
+  // instead of that child's true total.
+  it("coalesces perMember by ordinal instead of repeating the child", () => {
+    const lines = computeNetRequired(
+      [
+        req({ memberOrdinal: 1, requiredUnits: 4 }),
+        req({ memberOrdinal: 1, requiredUnits: 2 }),
+      ],
+      [],
+    );
+    const line = lines[0]!;
+    expect(line.perMember).toEqual([{ memberOrdinal: 1, requiredUnits: 6 }]);
+    expect(line.grossRequiredUnits).toBe(6);
+  });
+
+  it("uses a member's combined total when a shareable line takes the max", () => {
+    const lines = computeNetRequired(
+      [
+        req({ memberOrdinal: 1, requiredUnits: 4, shareable: true }),
+        req({ memberOrdinal: 1, requiredUnits: 2, shareable: true }),
+        req({ memberOrdinal: 2, requiredUnits: 5, shareable: true }),
+      ],
+      [],
+    );
+    const line = lines[0]!;
+    // Child 1 needs 6 across both lists, child 2 needs 5; shareable -> max(6,5).
+    expect(line.perMember).toEqual([
+      { memberOrdinal: 1, requiredUnits: 6 },
+      { memberOrdinal: 2, requiredUnits: 5 },
+    ]);
+    expect(line.grossRequiredUnits).toBe(6);
+  });
+});
