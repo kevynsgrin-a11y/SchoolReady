@@ -103,7 +103,7 @@ describe("programmatic policy — gate + expiry combine", () => {
 
   it("passing gate + fresh trend evidence = indexable", () => {
     expect(resolveProgrammaticPolicy({ gate: { pass: true }, trend: fresh })).toEqual({
-      robots: "index,follow",
+      robots: "index,follow,max-image-preview:large",
       review: false,
     });
   });
@@ -126,7 +126,7 @@ describe("programmatic policy — gate + expiry combine", () => {
 
   it("non-trend programmatic pages resolve on the gate alone", () => {
     expect(resolveProgrammaticPolicy({ gate: { pass: true }, trend: null }).robots).toBe(
-      "index,follow",
+      "index,follow,max-image-preview:large",
     );
   });
 });

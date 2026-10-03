@@ -99,7 +99,7 @@ describe("robots resolution — default deny", () => {
 
   it("anonymous-only tools flip to noindex once a session cookie rides in", () => {
     for (const path of ["/plan/basket", "/budget", "/deals"]) {
-      expect(resolveRobots(path, anonymous).robots).toBe("index,follow");
+      expect(resolveRobots(path, anonymous).robots).toBe("index,follow,max-image-preview:large");
       expect(resolveRobots(path, withSession).robots).toBe("noindex");
     }
   });
@@ -135,7 +135,7 @@ describe("request session detection — exact cookie-name match (P8-4)", () => {
 
   it("a cookie whose name merely ends in the session name is NOT a session", () => {
     expect(resolveSeoForRequest(requestFor(`not_${SESSION_COOKIE}=x`)).robots).toBe(
-      "index,follow",
+      "index,follow,max-image-preview:large",
     );
   });
 
@@ -147,14 +147,14 @@ describe("request session detection — exact cookie-name match (P8-4)", () => {
   });
 
   it("no cookie header at all resolves anonymous", () => {
-    expect(resolveSeoForRequest(requestFor(null)).robots).toBe("index,follow");
+    expect(resolveSeoForRequest(requestFor(null)).robots).toBe("index,follow,max-image-preview:large");
   });
 });
 
 describe("resolved head — canonical and JSON-LD are index-only signals", () => {
   it("indexable render: canonical strips to the pattern, origin from config", () => {
     const seo = resolveSeoForPath("/plan/basket", anonymous);
-    expect(seo.robots).toBe("index,follow");
+    expect(seo.robots).toBe("index,follow,max-image-preview:large");
     expect(seo.canonicalUrl).toBe(`${canonicalOrigin()}/plan/basket`);
     expect(seo.canonicalUrl).toContain(BRAND.domain);
   });

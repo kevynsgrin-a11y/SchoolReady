@@ -13,7 +13,7 @@ import { handleUiRequest } from "../src/ui/server";
 import { makeClient } from "./api-helpers";
 import type { WorkerClient } from "./api-helpers";
 
-const INDEX_META = '<meta name="robots" content="index,follow">';
+const INDEX_META = '<meta name="robots" content="index,follow,max-image-preview:large">';
 const NOINDEX_META = '<meta name="robots" content="noindex">';
 
 interface UiResult {
@@ -58,7 +58,7 @@ describe("SEO over real rendered pages", () => {
     const home = await ui(client, "GET", "/", { cookie: null });
     expect(home.status).toBe(200);
     expect(home.html).toContain(INDEX_META);
-    expect(home.headers.get("x-robots-tag")).toBe("index,follow");
+    expect(home.headers.get("x-robots-tag")).toBe("index,follow,max-image-preview:large");
     expect(home.html).toContain(`<link rel="canonical" href="${origin}/">`);
     expect(home.html).toContain('<script type="application/ld+json">');
     expect(home.html).toContain('"@type":"WebSite"');
@@ -69,7 +69,7 @@ describe("SEO over real rendered pages", () => {
     for (const path of ["/plan/basket", "/budget", "/deals", "/capsule", "/intake", "/methodology"]) {
       const page = await ui(client, "GET", path, { cookie: null });
       expect(page.html, path).toContain(INDEX_META);
-      expect(page.headers.get("x-robots-tag"), path).toBe("index,follow");
+      expect(page.headers.get("x-robots-tag"), path).toBe("index,follow,max-image-preview:large");
       expect(page.html, path).toContain(`<link rel="canonical" href="${origin}${path}">`);
       if (path !== "/") expect(page.html, path).toContain('"@type":"BreadcrumbList"');
     }
