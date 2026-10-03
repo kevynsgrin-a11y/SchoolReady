@@ -42,7 +42,7 @@ function jsonLdFor(entry: RouteSeoEntry): string[] {
 
 export function resolveSeoForPath(path: string, ctx: RequestSeoContext): ResolvedSeo {
   const { robots, entry } = resolveRobots(path, ctx);
-  if (robots !== "index,follow" || entry === null) {
+  if (!robots.startsWith("index,follow") || entry === null) {
     // Canonical + structured data are index-only signals; a noindex render
     // carries neither (mixed signals confuse crawlers and audits alike).
     return { robots, canonicalUrl: null, jsonLd: [] };
