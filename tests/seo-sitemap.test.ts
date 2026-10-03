@@ -61,7 +61,7 @@ describe("sitemap — only indexable routes", () => {
       expect(
         resolveRobots(path, { method: "GET", hasSession: false }).robots,
         `sitemap contains ${path}, which a crawler may not index`,
-      ).toBe("index,follow");
+      ).toBe("index,follow,max-image-preview:large");
     }
   });
 
