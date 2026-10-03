@@ -58,7 +58,7 @@ export function sitemapUrls(input: SitemapInput = {}): string[] {
         ? null
         : trendPageStatus(candidate.trendProvenance, input.nowMs ?? 0);
     const policy = resolveProgrammaticPolicy({ gate, trend });
-    if (policy.robots === "index,follow") urls.push(`${origin}${candidate.evidence.route}`);
+    if (policy.robots.startsWith("index,follow")) urls.push(`${origin}${candidate.evidence.route}`);
   }
   return urls;
 }

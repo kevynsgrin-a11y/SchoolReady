@@ -136,7 +136,7 @@ export interface RenderOptions {
 
 /** Analytics is limited to the same public, cookieless pages SEO may index. */
 export function isAnalyticsEligible(seo: SeoHead): boolean {
-  return seo.robots === "index,follow";
+  return seo.robots.startsWith("index,follow");
 }
 
 /** Composes the full HTML document for a screen. */

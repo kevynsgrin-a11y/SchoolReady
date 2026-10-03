@@ -226,7 +226,7 @@ export const ROUTE_SEO: readonly RouteSeoEntry[] = [
 /* Resolution                                                          */
 /* ------------------------------------------------------------------ */
 
-export type RobotsDirective = "index,follow" | "noindex";
+export type RobotsDirective = "index,follow" | "index,follow,max-image-preview:large" | "noindex";
 
 /** Evidence a programmatic route supplies to earn indexability. */
 export interface ProgrammaticResolutionInput {
@@ -250,7 +250,7 @@ export function resolveProgrammaticPolicy(
   if (!input.gate.pass) {
     return { robots: "noindex", review: false };
   }
-  return { robots: "index,follow", review: false };
+  return { robots: "index,follow,max-image-preview:large", review: false };
 }
 
 export interface RequestSeoContext {
@@ -289,9 +289,9 @@ export function resolveRobots(path: string, ctx: RequestSeoContext): ResolvedRob
   if (entry === null) return { robots: "noindex", entry: null, review: false };
   switch (entry.policy) {
     case "index":
-      return { robots: "index,follow", entry, review: false };
+      return { robots: "index,follow,max-image-preview:large", entry, review: false };
     case "index_anonymous_only":
-      return { robots: ctx.hasSession ? "noindex" : "index,follow", entry, review: false };
+      return { robots: ctx.hasSession ? "noindex" : "index,follow,max-image-preview:large", entry, review: false };
     case "noindex":
       return { robots: "noindex", entry, review: false };
     case "programmatic": {
